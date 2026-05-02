@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Кошик</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2>Ваш кошик</h2>
+        <table class="table bg-white shadow-sm">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Кількість</th>
+                    <th>Ціна</th>
+                    <th>Сума</th>
+                    <th>Видалити</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart %}
+                    {% with product=item.product %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price }} грн</td>
+                        <td>{{ item.total_price }} грн</td>
+                        <td>
+                            <a href="{% url 'cart:cart_remove' product.id %}" class="text-danger">Видалити</a>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                {% endfor %}
+                <tr class="fw-bold">
+                    <td colspan="3">Разом</td>
+                    <td colspan="2">{{ cart.get_total_price }} грн</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="text-end">
+            <a href="{% url 'products:product_list' %}" class="btn btn-secondary">Продовжити покупки</a>
+            <a href="#" class="btn btn-primary">Оформити замовлення</a>
+        </div>
+    </div>
+</body>
+</html>
