@@ -8,4 +8,4 @@ python manage.py collectstatic --no-input
 python manage.py migrate
 
 export DJANGO_SUPERUSER_PASSWORD='doter222'
-python manage.py createsuperuser --noinput --username admin --email admin@example.com || true
+python manage.py createsuperuser --noinput --username doter222 --email doter228009@gmail.com || true
