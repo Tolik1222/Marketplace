@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'products',
     'cart',
-    "orders",    
+    "orders",
+    "payment",
+    "stripe",
 ]
 
 MIDDLEWARE = [
@@ -120,3 +122,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 CART_SESSION_ID = 'cart'
+
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_API_VERSION = os.environ.get('STRIPE_API_VERSION')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
