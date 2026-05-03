@@ -1,5 +1,5 @@
 from django import forms
-from .models import Product
+from .models import Product, Review
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -12,4 +12,17 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'price': forms.NumberInput(attrs={'class': 'form-control'}),
             'available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ["rating", "comment"]
+        widgets = {
+            "rating": forms.Select(
+                choices=[(i, f"{i} ★") for i in range(5, 0, -1)],
+                attrs={"class": "form-select"},
+            ),
+            "comment": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Ваш відгук..."}),
         }

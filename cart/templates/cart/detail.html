@@ -12,6 +12,15 @@
             </div>
 
             {% if cart|length %}
+                <div class="row mb-4">
+                    <div class="col-lg-6">
+                        <form method="post" action="{% url 'cart:cart_apply_coupon' %}" class="d-flex gap-2">
+                            {% csrf_token %}
+                            {{ coupon_apply_form.code }}
+                            <button class="btn btn-outline-primary">Застосувати</button>
+                        </form>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
@@ -44,7 +53,15 @@
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
-                    <h5 class="mb-0">Разом: <span class="text-primary">{{ cart.get_total_price }} грн</span></h5>
+                    <div>
+                        <div>Сума: <strong>{{ cart.get_total_price }} грн</strong></div>
+                        {% with discount=cart.get_discount %}
+                            {% if discount %}
+                                <div class="text-success">Знижка: -{{ discount|floatformat:2 }} грн</div>
+                            {% endif %}
+                        {% endwith %}
+                        <h5 class="mb-0">Разом: <span class="text-primary">{{ cart.get_total_price_after_discount|floatformat:2 }} грн</span></h5>
+                    </div>
                     <div class="d-flex gap-2">
                         <a href="{% url 'products:product_list' %}" class="btn btn-light border">Продовжити покупки</a>
                         <a href="{% url 'orders:order_create' %}" class="btn btn-primary">Оформити замовлення</a>

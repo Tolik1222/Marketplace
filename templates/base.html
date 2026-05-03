@@ -89,17 +89,22 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'support:ticket_list' %}">
+                            <i class="bi bi-headset me-1"></i>Підтримка
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link cart-link" href="{% url 'cart:cart_detail' %}" id="cart-icon">
                             <i class="bi bi-cart3 fs-5"></i>
                             <span class="badge bg-danger cart-badge" id="cart-count">{{ cart|length }}</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'support:ticket_list' %}">
-                            <i class="bi bi-headset me-1"></i>Підтримка
-                        </a>
-                    </li>
                     {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'products:wishlist_list' %}">
+                                <i class="bi bi-heart me-1"></i>Бажане
+                            </a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
                                id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -122,6 +127,16 @@
     </nav>
 
     <main class="site-container">
+        {% if messages %}
+            <div class="container mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 

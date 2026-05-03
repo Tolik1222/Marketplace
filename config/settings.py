@@ -153,3 +153,9 @@ STRIPE_API_VERSION = os.environ.get('STRIPE_API_VERSION')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
 CLOUDINARY_STORAGE = {}
+
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@superstore.local")
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+ORDER_ADMIN_EMAIL = os.environ.get("ORDER_ADMIN_EMAIL")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
