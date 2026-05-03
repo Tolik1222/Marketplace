@@ -45,3 +45,7 @@ def product_add(request):
 def product_detail(request, id, slug):
     product = get_object_or_404(Product, id=id, slug=slug, available=True)
     return render(request, 'products/product/detail.html', {'product': product})
+
+
+def shipping_payment(request):
+    return render(request, 'products/pages/shipping_payment.html')

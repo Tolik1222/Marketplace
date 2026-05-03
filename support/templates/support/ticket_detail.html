@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Тікет #{{ ticket.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-wrap {
+        max-height: 480px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .msg {
+        border-radius: 1rem;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.8rem;
+        max-width: 75%;
+    }
+    .msg-user {
+        background: #e9f2ff;
+        margin-left: auto;
+    }
+    .msg-staff {
+        background: #f4f5f7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h3 class="mb-1">#{{ ticket.id }} — {{ ticket.subject }}</h3>
+                    <small class="text-muted">Створено {{ ticket.created_at|date:"d.m.Y H:i" }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    {% if ticket.status == "open" %}
+                        <span class="badge text-bg-warning">Відкрито</span>
+                    {% elif ticket.status == "answered" %}
+                        <span class="badge text-bg-success">Є відповідь</span>
+                    {% else %}
+                        <span class="badge text-bg-secondary">Закрито</span>
+                    {% endif %}
+
+                    {% if user.is_staff %}
+                        <form method="post" action="{% url 'support:ticket_update_status' ticket.id %}">
+                            {% csrf_token %}
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="open" {% if ticket.status == "open" %}selected{% endif %}>Відкрито</option>
+                                <option value="answered" {% if ticket.status == "answered" %}selected{% endif %}>Є відповідь</option>
+                                <option value="closed" {% if ticket.status == "closed" %}selected{% endif %}>Закрито</option>
+                            </select>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="chat-wrap mb-4">
+                <div id="chat-messages">
+                    {% for msg in ticket.messages.all %}
+                        <div class="msg {% if msg.is_staff_reply %}msg-staff{% else %}msg-user{% endif %}">
+                            <div class="small fw-semibold mb-1">
+                                {% if msg.is_staff_reply %}Підтримка{% else %}{{ msg.author.username }}{% endif %}
+                            </div>
+                            <div>{{ msg.message|linebreaksbr }}</div>
+                            <div class="small text-muted mt-2">{{ msg.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">Повідомлень поки немає.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <label class="form-label">Нове повідомлення</label>
+                {{ form.message }}
+                {% if user.is_staff %}
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Дякуємо за звернення! Ми вже перевіряємо деталі вашого запиту.">Швидка: В роботі</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Ваше питання вирішено. Якщо потрібна додаткова допомога — напишіть нам.">Швидка: Вирішено</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Будь ласка, уточніть номер замовлення та зручний спосіб зв’язку.">Швидка: Уточнення</button>
+                    </div>
+                {% endif %}
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">Надіслати</button>
+                    <a href="{% url 'support:ticket_list' %}" class="btn btn-light border">До списку</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chatWrap = document.querySelector('.chat-wrap');
+    const chatMessages = document.getElementById('chat-messages');
+    const messageUrl = "{% url 'support:ticket_messages_api' ticket.id %}";
+    const messageField = document.getElementById('id_message');
+
+    function scrollChatToBottom() {
+        if (chatWrap) {
+            chatWrap.scrollTop = chatWrap.scrollHeight;
+        }
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;');
+    }
+
+    function renderMessages(messages) {
+        if (!chatMessages) return;
+        if (!messages.length) {
+            chatMessages.innerHTML = '<p class="text-muted">Повідомлень поки немає.</p>';
+            return;
+        }
+
+        chatMessages.innerHTML = messages.map((msg) => {
+            const msgClass = msg.is_staff_reply ? 'msg-staff' : 'msg-user';
+            const formattedText = escapeHtml(msg.message).replaceAll('\n', '<br>');
+            return `
+                <div class="msg ${msgClass}">
+                    <div class="small fw-semibold mb-1">${escapeHtml(msg.author)}</div>
+                    <div>${formattedText}</div>
+                    <div class="small text-muted mt-2">${escapeHtml(msg.created_at)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function refreshMessages() {
+        try {
+            const response = await fetch(messageUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!response.ok) return;
+            const data = await response.json();
+            renderMessages(data.messages || []);
+            scrollChatToBottom();
+        } catch (error) {
+            // Silent fail for polling.
+        }
+    }
+
+    document.querySelectorAll('.js-quick-reply').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (messageField) {
+                messageField.value = button.dataset.text || '';
+                messageField.focus();
+            }
+        });
+    });
+
+    scrollChatToBottom();
+    setInterval(refreshMessages, 5000);
+</script>
+{% endblock %}

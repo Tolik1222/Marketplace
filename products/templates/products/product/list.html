@@ -2,62 +2,215 @@
 
 {% block title %}Super Store 2026{% endblock %}
 
+{% block extra_css %}
+<style>
+    .category-card,
+    .products-card {
+        border: 0;
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow: 0 12px 28px rgba(29, 44, 84, 0.08);
+    }
+    .category-list .list-group-item {
+        border: 0;
+        border-radius: 0.75rem !important;
+        margin-bottom: 0.35rem;
+        font-weight: 500;
+    }
+    .category-list .list-group-item.active {
+        background: #1b3fae;
+    }
+    .product-card {
+        border: 0;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(32, 47, 88, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 28px rgba(32, 47, 88, 0.16);
+    }
+    .product-image {
+        height: 210px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .add-to-cart-btn {
+        border-radius: 0.7rem;
+    }
+    .flying-product {
+        position: fixed;
+        border-radius: 10px;
+        z-index: 1050;
+        pointer-events: none;
+        transition: all 750ms cubic-bezier(0.2, 0.7, 0.2, 1);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="col-md-3">
-            <h4 class="mb-3">Категорії</h4>
-            <div class="list-group shadow-sm">
-                <a href="{% url 'products:product_list' %}" 
-                   class="list-group-item list-group-item-action {% if not category %}active{% endif %}">
-                    Всі товари
-                </a>
-                {% for c in categories %}
-                    <a href="{% url 'products:product_list_by_category' c.slug %}" 
-                       class="list-group-item list-group-item-action {% if category.slug == c.slug %}active{% endif %}">
-                        {{ c.name }}
-                    </a>
-                {% endfor %}
+            <div class="card category-card sticky-top" style="top: 1rem;">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="bi bi-grid-3x3-gap me-2"></i>Категорії</h5>
+                    <div class="list-group category-list">
+                        <a href="{% url 'products:product_list' %}" 
+                           class="list-group-item list-group-item-action {% if not category %}active{% endif %}">
+                            Всі товари
+                        </a>
+                        {% for c in categories %}
+                            <a href="{% url 'products:product_list_by_category' c.slug %}" 
+                               class="list-group-item list-group-item-action {% if category.slug == c.slug %}active{% endif %}">
+                                {{ c.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="col-md-9">
-            <h2 class="mb-4">
-                {% if category %}{{ category.name }}{% else %}Всі товари{% endif %}
-                {% if query %}<small class="text-muted"> — результати для "{{ query }}"</small>{% endif %}
-            </h2>
+            <div class="card products-card">
+                <div class="card-body p-4">
+                    <h3 class="mb-4">
+                        {% if category %}{{ category.name }}{% else %}Всі товари{% endif %}
+                        {% if query %}<small class="text-muted"> — результати для "{{ query }}"</small>{% endif %}
+                    </h3>
 
-            <div class="row">
-                {% for product in products %}
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100 shadow-sm">
-                            {% if product.image %}
-                                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
-                            {% else %}
-                                <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top" alt="Немає фото">
-                            {% endif %}
+                    <div class="row">
+                        {% for product in products %}
+                            <div class="col-md-6 col-xl-4 mb-4">
+                                <div class="card product-card h-100">
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}" class="product-image js-product-image" alt="{{ product.name }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/300x210?text=No+Image" class="product-image js-product-image" alt="Немає фото">
+                                    {% endif %}
 
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">{{ product.name }}</h5>
-                                <p class="card-text text-muted small">{{ product.description|truncatewords:10 }}</p>
-                                <div class="mt-auto">
-                                    <p class="h5 text-primary">{{ product.price }} грн</p>
-                                    <form action="{% url 'cart:cart_add' product.id %}" method="post">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-primary w-100 mt-2 shadow-sm">До кошика</button>
-                                    </form>
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ product.name }}</h5>
+                                        <p class="card-text text-muted small">{{ product.description|truncatewords:10 }}</p>
+                                        <div class="mt-auto">
+                                            <p class="h5 text-primary">{{ product.price }} грн</p>
+                                            <form action="{% url 'cart:cart_add' product.id %}" method="post" class="js-add-to-cart-form">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-primary w-100 mt-2 add-to-cart-btn js-add-to-cart-btn">До кошика</button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        {% empty %}
+                            <div class="col-12 text-center mt-5">
+                                <p class="h4 text-muted">Товарів не знайдено 🔍</p>
+                                <a href="{% url 'products:product_list' %}" class="btn btn-secondary mt-2">Скинути пошук</a>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% empty %}
-                    <div class="col-12 text-center mt-5">
-                        <p class="h4 text-muted">Товарів не знайдено 🔍</p>
-                        <a href="{% url 'products:product_list' %}" class="btn btn-secondary mt-2">Скинути пошук</a>
-                    </div>
-                {% endfor %}
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const cartIcon = document.getElementById('cart-icon');
+    const cartCount = document.getElementById('cart-count');
+
+    function getCsrfToken(form) {
+        const tokenInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        return tokenInput ? tokenInput.value : '';
+    }
+
+    function animateToCart(imageElement) {
+        if (!cartIcon || !imageElement) return Promise.resolve();
+
+        const imgRect = imageElement.getBoundingClientRect();
+        const cartRect = cartIcon.getBoundingClientRect();
+        const clone = imageElement.cloneNode();
+
+        clone.classList.add('flying-product');
+        clone.style.left = `${imgRect.left}px`;
+        clone.style.top = `${imgRect.top}px`;
+        clone.style.width = `${imgRect.width}px`;
+        clone.style.height = `${imgRect.height}px`;
+        clone.style.opacity = '0.95';
+        document.body.appendChild(clone);
+
+        requestAnimationFrame(() => {
+            clone.style.left = `${cartRect.left + (cartRect.width / 2) - 12}px`;
+            clone.style.top = `${cartRect.top + (cartRect.height / 2) - 12}px`;
+            clone.style.width = '24px';
+            clone.style.height = '24px';
+            clone.style.opacity = '0.15';
+            clone.style.transform = 'scale(0.5)';
+        });
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                clone.remove();
+                resolve();
+            }, 780);
+        });
+    }
+
+    async function handleAddToCartSubmit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const button = form.querySelector('.js-add-to-cart-btn');
+        const card = form.closest('.product-card');
+        const productImage = card ? card.querySelector('.js-product-image') : null;
+        const csrfToken = getCsrfToken(form);
+
+        if (button) {
+            button.disabled = true;
+            button.innerText = 'Додаємо...';
+        }
+
+        await animateToCart(productImage);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                }
+            });
+
+            if (!response.ok) throw new Error('Cart add failed');
+            const data = await response.json();
+            if (cartCount && typeof data.cart_count === 'number') {
+                cartCount.textContent = data.cart_count;
+            }
+
+            if (button) {
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-success');
+                button.innerText = 'Додано!';
+                setTimeout(() => {
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-primary');
+                    button.innerText = 'До кошика';
+                    button.disabled = false;
+                }, 900);
+            }
+        } catch (error) {
+            if (button) {
+                button.disabled = false;
+                button.innerText = 'Спробувати ще';
+            }
+        }
+    }
+
+    document.querySelectorAll('.js-add-to-cart-form').forEach((form) => {
+        form.addEventListener('submit', handleAddToCartSubmit);
+    });
+</script>
 {% endblock %}

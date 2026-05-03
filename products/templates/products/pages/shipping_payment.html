@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Доставка і оплата{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="mb-3"><i class="bi bi-truck me-2"></i>Доставка і оплата</h2>
+                    <p class="text-muted mb-4">
+                        Ми доставляємо замовлення по всій Україні швидко та зручно.
+                    </p>
+
+                    <h5 class="mt-4">Варіанти доставки</h5>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 h-100">
+                                <strong>Нова Пошта</strong>
+                                <div class="small text-muted mt-2">Відділення та поштомати по Україні.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 h-100">
+                                <strong>Укрпошта</strong>
+                                <div class="small text-muted mt-2">Доступно для міст та сіл.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 h-100">
+                                <strong>Meest</strong>
+                                <div class="small text-muted mt-2">Зручна доставка у пункти видачі.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4">Терміни</h5>
+                    <ul class="mb-0">
+                        <li>Середній термін доставки: <strong>до 4 робочих днів</strong>.</li>
+                        <li>У великі міста зазвичай 1-2 дні, у віддалені регіони — 3-4 дні.</li>
+                    </ul>
+
+                    <h5 class="mt-4">Оплата</h5>
+                    <ul class="mb-0">
+                        <li>Онлайн-оплата карткою.</li>
+                        <li>Для замовлень дорожче <strong>5000 грн</strong> — передоплата <strong>10%</strong>.</li>
+                        <li>Решта суми — при отриманні або повна оплата онлайн.</li>
+                    </ul>
+
+                    <h5 class="mt-4">Повернення</h5>
+                    <p class="mb-0">
+                        Повернення можливе протягом 14 днів за умови збереження товарного вигляду та повної комплектації.
+                        Якщо товар має дефект або не відповідає опису, ми покриваємо витрати на зворотну доставку.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h5>Потрібна допомога?</h5>
+                    <p class="text-muted">Напишіть нам у чат підтримки — відповідаємо максимально швидко.</p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'support:ticket_list' %}" class="btn btn-primary w-100">Перейти в підтримку</a>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary w-100">Увійти для звернення</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
