@@ -38,7 +38,14 @@
                                     <tr>
                                         <td>{{ product.name }}</td>
                                         <td>{{ item.quantity }}</td>
-                                        <td>{{ item.price }} грн</td>
+                                        <td>
+                                            {% if item.has_product_discount %}
+                                                <div class="fw-semibold">{{ item.price }} грн</div>
+                                                <div class="small text-muted text-decoration-line-through">{{ item.original_price }} грн</div>
+                                            {% else %}
+                                                {{ item.price }} грн
+                                            {% endif %}
+                                        </td>
                                         <td class="fw-semibold">{{ item.total_price }} грн</td>
                                         <td class="text-end">
                                             <a href="{% url 'cart:cart_remove' product.id %}" class="btn btn-sm btn-outline-danger">

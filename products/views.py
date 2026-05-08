@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.db.models import Avg
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.text import slugify # автоматичне створення slug
@@ -18,13 +19,42 @@ def product_list(request, category_slug=None):
 
     query = request.GET.get('q')
     if query:
-        products = products.filter(name__icontains=query)
+        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
+
+    price_min = request.GET.get("price_min")
+    price_max = request.GET.get("price_max")
+    availability = request.GET.get("availability", "all")
+    sort = request.GET.get("sort", "newest")
+
+    if price_min:
+        try:
+            products = products.filter(price__gte=float(price_min))
+        except ValueError:
+            price_min = ""
+    if price_max:
+        try:
+            products = products.filter(price__lte=float(price_max))
+        except ValueError:
+            price_max = ""
+
+    if availability == "in_stock":
+        products = products.filter(available=True)
+
+    sort_map = {
+        "newest": "-updated",
+        "price_asc": "price",
+        "price_desc": "-price",
+        "name_asc": "name",
+        "name_desc": "-name",
+    }
+    products = products.order_by(sort_map.get(sort, "-updated"))
 
     wishlist_ids = set()
     if request.user.is_authenticated:
         wishlist_ids = set(
             WishlistItem.objects.filter(user=request.user).values_list("product_id", flat=True)
         )
+    discounted_products = Product.objects.filter(available=True, discount_percent__gt=0).order_by("-discount_percent", "-updated")[:8]
 
     return render(request, 'products/product/list.html', {
         'category': category,
@@ -32,19 +62,26 @@ def product_list(request, category_slug=None):
         'products': products,
         'query': query,
         'wishlist_ids': wishlist_ids,
+        'price_min': price_min or "",
+        'price_max': price_max or "",
+        'availability': availability,
+        'sort': sort,
+        'discounted_products': discounted_products,
     })
 
 # для додавання товару
+@login_required
 def product_add(request):
-    # щоб тільки адмін міг додавати:
-    # if not request.user.is_staff:
-    #     return redirect('products:product_list')
+    if not request.user.is_staff:
+        messages.error(request, "Лише адміністратор може додавати товари.")
+        return redirect('products:product_list')
 
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save(commit=False)
             product.slug = slugify(product.name)
+            product.owner = request.user
             product.save()
             return redirect('products:product_list')
     else:

@@ -47,6 +47,31 @@
         transition: all 750ms cubic-bezier(0.2, 0.7, 0.2, 1);
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
     }
+    .discount-card {
+        border: 0;
+        border-radius: 1rem;
+        background: linear-gradient(150deg, #182f78 0%, #284cb7 55%, #3f66dd 100%);
+        color: #fff;
+        overflow: hidden;
+        box-shadow: 0 14px 26px rgba(31, 56, 129, 0.35);
+    }
+    .discount-slide {
+        display: none;
+    }
+    .discount-slide.is-active {
+        display: block;
+    }
+    .discount-image {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 0.75rem;
+    }
+    .price-old {
+        text-decoration: line-through;
+        color: #8a96b8;
+        font-size: 0.9rem;
+    }
 </style>
 {% endblock %}
 
@@ -71,6 +96,34 @@
                     </div>
                 </div>
             </div>
+            {% if discounted_products %}
+                <div class="card discount-card mt-3">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="bi bi-fire me-1"></i>Знижки</h6>
+                            <span class="badge text-bg-light">оновлення 5с</span>
+                        </div>
+                        <div class="js-discount-slider">
+                            {% for discounted in discounted_products %}
+                                <div class="discount-slide {% if forloop.first %}is-active{% endif %}">
+                                    {% if discounted.image %}
+                                        <img src="{{ discounted.image.url }}" class="discount-image mb-2" alt="{{ discounted.name }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/300x160?text=Sale" class="discount-image mb-2" alt="{{ discounted.name }}">
+                                    {% endif %}
+                                    <div class="fw-semibold">{{ discounted.name }}</div>
+                                    <div class="small mb-2">Знижка -{{ discounted.discount_percent }}%</div>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="fw-bold">{{ discounted.get_discounted_price }} грн</span>
+                                        <span class="text-white-50 text-decoration-line-through">{{ discounted.price }} грн</span>
+                                    </div>
+                                    <a href="{% url 'products:product_detail' discounted.id discounted.slug %}" class="btn btn-light btn-sm w-100">Переглянути</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <div class="col-md-9">
@@ -80,6 +133,41 @@
                         {% if category %}{{ category.name }}{% else %}Всі товари{% endif %}
                         {% if query %}<small class="text-muted"> — результати для "{{ query }}"</small>{% endif %}
                     </h3>
+
+                    <form method="get" class="row g-2 align-items-end mb-4">
+                        {% if query %}
+                            <input type="hidden" name="q" value="{{ query }}">
+                        {% endif %}
+                        <div class="col-6 col-md-3">
+                            <label for="id_price_min" class="form-label small text-muted mb-1">Ціна від</label>
+                            <input id="id_price_min" type="number" step="0.01" min="0" name="price_min" value="{{ price_min }}" class="form-control" placeholder="0">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="id_price_max" class="form-label small text-muted mb-1">Ціна до</label>
+                            <input id="id_price_max" type="number" step="0.01" min="0" name="price_max" value="{{ price_max }}" class="form-control" placeholder="10000">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="id_availability" class="form-label small text-muted mb-1">Наявність</label>
+                            <select id="id_availability" name="availability" class="form-select">
+                                <option value="all" {% if availability == "all" %}selected{% endif %}>Всі</option>
+                                <option value="in_stock" {% if availability == "in_stock" %}selected{% endif %}>Лише в наявності</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label for="id_sort" class="form-label small text-muted mb-1">Сортування</label>
+                            <select id="id_sort" name="sort" class="form-select">
+                                <option value="newest" {% if sort == "newest" %}selected{% endif %}>Спочатку нові</option>
+                                <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Ціна: від дешевих</option>
+                                <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Ціна: від дорогих</option>
+                                <option value="name_asc" {% if sort == "name_asc" %}selected{% endif %}>Назва: A-Я</option>
+                                <option value="name_desc" {% if sort == "name_desc" %}selected{% endif %}>Назва: Я-A</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Застосувати</button>
+                            <a href="{% if category %}{% url 'products:product_list_by_category' category.slug %}{% else %}{% url 'products:product_list' %}{% endif %}" class="btn btn-outline-secondary">Скинути</a>
+                        </div>
+                    </form>
 
                     <div class="row">
                         {% for product in products %}
@@ -102,7 +190,15 @@
                                         </div>
                                         <p class="card-text text-muted small">{{ product.description|truncatewords:10 }}</p>
                                         <div class="mt-auto">
-                                            <p class="h5 text-primary">{{ product.price }} грн</p>
+                                            {% if product.has_discount %}
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <p class="h5 text-primary mb-0">{{ product.get_discounted_price }} грн</p>
+                                                    <span class="price-old">{{ product.price }} грн</span>
+                                                </div>
+                                                <span class="badge text-bg-danger mb-2">-{{ product.discount_percent }}%</span>
+                                            {% else %}
+                                                <p class="h5 text-primary">{{ product.price }} грн</p>
+                                            {% endif %}
                                             <a href="{% url 'products:product_detail' product.id product.slug %}" class="btn btn-light border w-100 mb-2">Детальніше</a>
                                             <form action="{% url 'cart:cart_add' product.id %}" method="post" class="js-add-to-cart-form">
                                                 {% csrf_token %}
@@ -220,5 +316,16 @@
     document.querySelectorAll('.js-add-to-cart-form').forEach((form) => {
         form.addEventListener('submit', handleAddToCartSubmit);
     });
+
+    const discountSlider = document.querySelector('.js-discount-slider');
+    if (discountSlider) {
+        const slides = Array.from(discountSlider.querySelectorAll('.discount-slide'));
+        let activeIndex = 0;
+        setInterval(() => {
+            slides[activeIndex].classList.remove('is-active');
+            activeIndex = (activeIndex + 1) % slides.length;
+            slides[activeIndex].classList.add('is-active');
+        }, 5000);
+    }
 </script>
 {% endblock %}

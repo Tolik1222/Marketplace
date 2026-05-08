@@ -7,5 +7,6 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
-export DJANGO_SUPERUSER_PASSWORD='doter222'
-python manage.py createsuperuser --noinput --username doter222 --email doter228009@gmail.com || true
+if [ -n "${DJANGO_SUPERUSER_USERNAME}" ] && [ -n "${DJANGO_SUPERUSER_EMAIL}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD}" ]; then
+  python manage.py createsuperuser --noinput || true
+fi

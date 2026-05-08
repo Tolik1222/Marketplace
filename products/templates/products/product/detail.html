@@ -15,7 +15,15 @@
                 <div class="col-md-7">
                     <h2>{{ product.name }}</h2>
                     <p class="text-muted">{{ product.description }}</p>
-                    <h4 class="text-primary">{{ product.price }} грн</h4>
+                    {% if product.has_discount %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <h4 class="text-primary mb-0">{{ product.get_discounted_price }} грн</h4>
+                            <span class="text-muted text-decoration-line-through">{{ product.price }} грн</span>
+                            <span class="badge text-bg-danger">-{{ product.discount_percent }}%</span>
+                        </div>
+                    {% else %}
+                        <h4 class="text-primary">{{ product.price }} грн</h4>
+                    {% endif %}
                     <div class="d-flex gap-2 mt-3">
                         <form action="{% url 'cart:cart_add' product.id %}" method="post">
                             {% csrf_token %}
@@ -82,7 +90,12 @@
                                     <img src="{{ item.image.url }}" class="img-fluid rounded mb-2" style="height: 120px; width: 100%; object-fit: cover;" alt="{{ item.name }}">
                                 {% endif %}
                                 <div class="text-dark">{{ item.name }}</div>
-                                <div class="text-primary fw-semibold">{{ item.price }} грн</div>
+                                {% if item.has_discount %}
+                                    <div class="text-primary fw-semibold">{{ item.get_discounted_price }} грн</div>
+                                    <div class="small text-muted text-decoration-line-through">{{ item.price }} грн</div>
+                                {% else %}
+                                    <div class="text-primary fw-semibold">{{ item.price }} грн</div>
+                                {% endif %}
                             </div>
                         </a>
                     </div>
