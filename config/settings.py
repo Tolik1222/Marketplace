@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     'cart',
     "orders",
     "payment",
-    "stripe",
     "accounts",
     "support",
 ]
@@ -88,6 +87,7 @@ STORAGES = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -148,11 +148,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'uk'
 
-TIME_ZONE = 'UTC'
+LANGUAGES = [
+    ('uk', 'Українська'),
+    ('en', 'English'),
+]
 
 USE_I18N = True
+
+TIME_ZONE = 'UTC'
 
 USE_TZ = True
 
@@ -211,3 +216,24 @@ LOGGING = {
         },
     },
 }
+
+
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379'),
+    }
+}
+
+try:
+    import redis
+    _r = redis.Redis.from_url(CACHES['default']['LOCATION'], socket_timeout=1)
+    _r.ping()
+except Exception:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'marketplace-locmem-fallback',
+        }
+    }

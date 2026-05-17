@@ -33,12 +33,24 @@ class Cart:
 
     def __iter__(self):
         product_ids = self.cart.keys()
-        products = Product.objects.filter(id__in=product_ids)
-        cart = self.cart.copy()
-        for product in products:
-            cart[str(product.id)]['product'] = product
+        products = {str(p.id): p for p in Product.objects.filter(id__in=product_ids)}
+        
+        # Clean up cart items whose products no longer exist in the database
+        to_remove = []
+        for product_id in list(self.cart.keys()):
+            if product_id not in products:
+                to_remove.append(product_id)
+        
+        for product_id in to_remove:
+            del self.cart[product_id]
+        if to_remove:
+            self.save()
 
-        for item in cart.values():
+        # Populate and yield remaining existing items
+        for product_id, product in products.items():
+            self.cart[product_id]['product'] = product
+
+        for item in self.cart.values():
             product = item['product']
             item['price'] = product.get_discounted_price()
             item['original_price'] = product.price
@@ -74,7 +86,10 @@ class Cart:
     def get_discount(self):
         coupon = self.get_coupon()
         if coupon and coupon.is_valid():
-            return (coupon.discount / Decimal("100")) * self.get_total_price()
+            if getattr(coupon, 'discount_type', 'percentage') == 'percentage':
+                return (coupon.discount / Decimal("100")) * self.get_total_price()
+            else:  # 'fixed'
+                return min(getattr(coupon, 'discount_value', Decimal("0.00")), self.get_total_price())
         return Decimal("0")
 
     def get_total_price_after_discount(self):

@@ -1,14 +1,16 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Нове звернення{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}New Support Ticket{% else %}Нове звернення{% endif %}{% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 p-lg-5">
-                    <h3 class="mb-4"><i class="bi bi-chat-square-text me-2"></i>Нове звернення в підтримку</h3>
+                    <h3 class="mb-4"><i class="bi bi-chat-square-text me-2"></i>{% if LANGUAGE_CODE == 'en' %}New Support Ticket{% else %}Нове звернення в підтримку{% endif %}</h3>
 
                     <form method="post">
                         {% csrf_token %}
@@ -21,13 +23,12 @@
                             {{ form.message }}
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Відправити</button>
-                            <a href="{% url 'support:ticket_list' %}" class="btn btn-light border">Скасувати</a>
+                            <button type="submit" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Submit{% else %}Відправити{% endif %}</button>
+                            <a href="{% url 'support:ticket_list' %}" class="btn btn-light border">{% if LANGUAGE_CODE == 'en' %}Cancel{% else %}Скасувати{% endif %}</a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+</div>{% endblock %}

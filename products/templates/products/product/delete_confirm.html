@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Delete Product: {{ product.name }}{% else %}Видалення товару: {{ product.name }}{% endif %}{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <!-- Кнопка Назад -->
+            <a href="{% url 'accounts:seller_dashboard' %}" class="btn btn-link text-decoration-none text-muted mb-3 p-0">
+                <i class="bi bi-arrow-left me-1"></i>{% if LANGUAGE_CODE == 'en' %}Back to dashboard{% else %}Назад до кабінету{% endif %}
+            </a>
+
+            <!-- Картка підтвердження -->
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="bg-danger bg-opacity-10 py-4 text-center border-0">
+                    <div class="text-danger mb-2">
+                        <i class="bi bi-exclamation-triangle fs-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-0 text-danger">{% if LANGUAGE_CODE == 'en' %}Delete Product{% else %}Видалення товару{% endif %}</h4>
+                </div>
+                <div class="card-body p-4 p-md-5 text-center">
+                    <p class="h5 mb-4">{% if LANGUAGE_CODE == 'en' %}Are you sure you want to permanently delete this product?{% else %}Ви впевнені, що бажаєте остаточно видалити цей товар?{% endif %}</p>
+                    
+                    <div class="p-3 bg-light rounded-3 mb-4 border border-secondary-subtle d-flex align-items-center justify-content-center">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        {% endif %}
+                        <div class="text-start">
+                            <h6 class="fw-bold mb-1">{{ product.name }}</h6>
+                            <span class="badge bg-secondary">{{ product.category.name }}</span>
+                            <span class="text-muted small ms-2">{{ product.price }} {% if LANGUAGE_CODE == 'en' %}UAH{% else %}грн{% endif %}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning border-0 small text-start mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i><strong>{% if LANGUAGE_CODE == 'en' %}Warning:{% else %}Увага:{% endif %}</strong> {% if LANGUAGE_CODE == 'en' %}This action is irreversible! The product will be completely removed from the catalog and your seller panel.{% else %}Ця дія є незворотною! Товар буде повністю видалено з каталогу та вашої панелі продавця.{% endif %}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{% url 'accounts:seller_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4 py-2 me-md-2">
+                                {% if LANGUAGE_CODE == 'en' %}Cancel{% else %}Скасувати{% endif %}
+                            </a>
+                            <button type="submit" class="btn btn-danger rounded-pill px-4 py-2 shadow-sm">
+                                <i class="bi bi-trash me-2"></i>{% if LANGUAGE_CODE == 'en' %}Yes, delete product{% else %}Так, видалити товар{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

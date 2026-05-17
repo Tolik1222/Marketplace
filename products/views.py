@@ -2,59 +2,91 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db.models import Avg
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, get_object_or_404, redirect
-from django.utils.text import slugify # автоматичне створення slug
+from django.utils.text import slugify
+from django.core.cache import cache
 from .models import Category, Product, Review, WishlistItem
 from .forms import ProductForm, ReviewForm
 
 # функція списку
 def product_list(request, category_slug=None):
-    category = None
-    categories = Category.objects.all()
-    products = Product.objects.filter(available=True)
+    categories = cache.get_or_set("categories_all", lambda: list(Category.objects.all()), 600)
     
+    category = None
     if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        products = products.filter(category=category)
+        category = cache.get_or_set(f"category_obj_{category_slug}", lambda: get_object_or_404(Category, slug=category_slug), 600)
 
-    query = request.GET.get('q')
-    if query:
-        products = products.filter(Q(name__icontains=query) | Q(description__icontains=query))
-
-    price_min = request.GET.get("price_min")
-    price_max = request.GET.get("price_max")
+    query = request.GET.get('q', '')
+    price_min = request.GET.get("price_min", "")
+    price_max = request.GET.get("price_max", "")
     availability = request.GET.get("availability", "all")
     sort = request.GET.get("sort", "newest")
 
-    if price_min:
-        try:
-            products = products.filter(price__gte=float(price_min))
-        except ValueError:
-            price_min = ""
-    if price_max:
-        try:
-            products = products.filter(price__lte=float(price_max))
-        except ValueError:
-            price_max = ""
+    # Construct unique cache key for the query results before pagination
+    query_cache_key = f"products_query_{category_slug or 'all'}_{price_min}_{price_max}_{availability}_{sort}_{query}"
+    
+    products_list = cache.get(query_cache_key)
+    if products_list is None:
+        products_query = Product.objects.filter(available=True)
+        if category:
+            products_query = products_query.filter(category=category)
+        if query:
+            products_query = products_query.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
-    if availability == "in_stock":
-        products = products.filter(available=True)
+        if price_min:
+            try:
+                products_query = products_query.filter(price__gte=float(price_min))
+            except ValueError:
+                price_min = ""
+        if price_max:
+            try:
+                products_query = products_query.filter(price__lte=float(price_max))
+            except ValueError:
+                price_max = ""
 
-    sort_map = {
-        "newest": "-updated",
-        "price_asc": "price",
-        "price_desc": "-price",
-        "name_asc": "name",
-        "name_desc": "-name",
-    }
-    products = products.order_by(sort_map.get(sort, "-updated"))
+        if availability == "in_stock":
+            products_query = products_query.filter(available=True)
+
+        sort_map = {
+            "newest": "-updated",
+            "price_asc": "price",
+            "price_desc": "-price",
+            "name_asc": "name",
+            "name_desc": "-name",
+        }
+        products_query = products_query.order_by(sort_map.get(sort, "-updated"))
+        
+        products_list = list(products_query)
+        cache.set(query_cache_key, products_list, 600)
+
+    # Пагінація: по 6 товарів на сторінку
+    paginator = Paginator(products_list, 6)
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    # Збереження GET-параметрів (фільтрів) для посилань пагінації
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    query_string = query_params.urlencode()
 
     wishlist_ids = set()
     if request.user.is_authenticated:
         wishlist_ids = set(
             WishlistItem.objects.filter(user=request.user).values_list("product_id", flat=True)
         )
-    discounted_products = Product.objects.filter(available=True, discount_percent__gt=0).order_by("-discount_percent", "-updated")[:8]
+        
+    discounted_products = cache.get_or_set(
+        "discounted_products_hot",
+        lambda: list(Product.objects.filter(available=True, discount_percent__gt=0).order_by("-discount_percent", "-updated")[:8]),
+        600
+    )
 
     return render(request, 'products/product/list.html', {
         'category': category,
@@ -67,6 +99,7 @@ def product_list(request, category_slug=None):
         'availability': availability,
         'sort': sort,
         'discounted_products': discounted_products,
+        'query_string': query_string,
     })
 
 # для додавання товару
@@ -83,11 +116,56 @@ def product_add(request):
             product.slug = slugify(product.name)
             product.owner = request.user
             product.save()
-            return redirect('products:product_list')
+            messages.success(request, f"Товар '{product.name}' успішно додано.")
+            return redirect('accounts:seller_dashboard')
     else:
         form = ProductForm()
     
     return render(request, 'products/product/add.html', {'form': form})
+
+
+@login_required
+def product_edit(request, id):
+    if not request.user.is_staff:
+        messages.error(request, "Лише продавці мають право редагувати товари.")
+        return redirect('products:product_list')
+    
+    product = get_object_or_404(Product, id=id)
+    if product.owner != request.user and not request.user.is_superuser:
+        messages.error(request, "Ви не є власником цього товару.")
+        return redirect('accounts:seller_dashboard')
+        
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.slug = slugify(product.name)
+            product.save()
+            messages.success(request, f"Товар '{product.name}' успішно оновлено.")
+            return redirect('accounts:seller_dashboard')
+    else:
+        form = ProductForm(instance=product)
+    
+    return render(request, 'products/product/edit.html', {'form': form, 'product': product})
+
+
+@login_required
+def product_delete(request, id):
+    if not request.user.is_staff:
+        messages.error(request, "Лише продавці мають право видаляти товари.")
+        return redirect('products:product_list')
+        
+    product = get_object_or_404(Product, id=id)
+    if product.owner != request.user and not request.user.is_superuser:
+        messages.error(request, "Ви не є власником цього товару.")
+        return redirect('accounts:seller_dashboard')
+        
+    if request.method == 'POST':
+        product.delete()
+        messages.success(request, f"Товар '{product.name}' успішно видалено.")
+        return redirect('accounts:seller_dashboard')
+        
+    return render(request, 'products/product/delete_confirm.html', {'product': product})
 
 def product_detail(request, id, slug):
     product = get_object_or_404(Product, id=id, slug=slug, available=True)
@@ -95,7 +173,8 @@ def product_detail(request, id, slug):
     avg_rating = reviews.aggregate(avg=Avg("rating"))["avg"]
 
     bought_together = Product.objects.filter(
-        order_items__order__items__product=product
+        order_items__order__items__product=product,
+        available=True
     ).exclude(id=product.id).distinct()[:4]
     similar_products = Product.objects.filter(category=product.category, available=True).exclude(id=product.id)[:4]
     recommendations = list(bought_together)
@@ -165,3 +244,56 @@ def review_create(request, product_id):
         new_review.save()
         messages.success(request, "Дякуємо за ваш відгук!")
     return redirect("products:product_detail", id=product.id, slug=product.slug)
+
+
+from django.http import JsonResponse
+from django.urls import reverse
+
+def product_search_ajax(request):
+    q = request.GET.get('q', '').strip()
+    if len(q) < 2:
+        return JsonResponse([], safe=False)
+
+    cache_key = f"ajax_search_{q.lower()}"
+    results = cache.get(cache_key)
+    if results is None:
+        products = Product.objects.filter(available=True, name__icontains=q)[:5]
+        results = []
+        for p in products:
+            results.append({
+                'id': p.id,
+                'name': p.name,
+                'price': str(p.get_discounted_price()),
+                'image': p.image.url if p.image else None,
+                'url': reverse('products:product_detail', args=[p.id, p.slug])
+            })
+        cache.set(cache_key, results, 300)
+    return JsonResponse(results, safe=False)
+
+
+def compare_toggle(request, product_id):
+    product = get_object_or_404(Product, id=product_id, available=True)
+    comparison = request.session.get('comparison', [])
+    
+    if product.id in comparison:
+        comparison.remove(product.id)
+        added = False
+    else:
+        comparison.append(product.id)
+        added = True
+        
+    request.session['comparison'] = comparison
+    request.session.modified = True
+    
+    return JsonResponse({
+        'added': added,
+        'count': len(comparison)
+    })
+
+
+def compare_list(request):
+    comparison = request.session.get('comparison', [])
+    products = Product.objects.filter(id__in=comparison, available=True)
+    return render(request, 'products/product/comparison.html', {
+        'products': products
+    })

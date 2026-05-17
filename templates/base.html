@@ -1,21 +1,160 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Super Store 2026{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <style>
         :root {
             --brand-dark: #121726;
-            --brand-accent: #5b8cff;
+            --brand-accent: #1b3fae;
             --brand-soft: #edf2ff;
+            --bg-body: #f8faff;
+            --bg-gradient-end: #f3f6fb;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --card-bg-rgb: 255, 255, 255;
+            --border-color: #dee2e6;
+            --text-muted: #6c757d;
+            --input-bg: #ffffff;
+            --input-color: #212529;
+            --input-border: #ced4da;
+            --nav-text: #e8ecff;
+        }
+        [data-theme="dark"] {
+            --brand-dark: #090d16;
+            --brand-accent: #5b8cff;
+            --brand-soft: #1c2742;
+            --bg-body: #0d1117;
+            --bg-gradient-end: #161b22;
+            --text-color: #c9d1d9;
+            --card-bg: #161b22;
+            --card-bg-rgb: 22, 27, 34;
+            --border-color: #30363d;
+            --text-muted: #8b949e;
+            --input-bg: #21262d;
+            --input-color: #c9d1d9;
+            --input-border: #30363d;
+            --nav-text: #c9d1d9;
         }
         body {
-            background: linear-gradient(180deg, #f8faff 0%, #f3f6fb 100%);
+            background: linear-gradient(180deg, var(--bg-body) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-color);
             min-height: 100vh;
         }
+        
+        /* Глобальний плавний перехід для елементів */
+        body, .card, .card-header, .table, th, td, .form-control, .form-select, .list-group-item, nav, .btn, input, a, span, button {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* Глобальні оверрайди для темної теми */
+        .card, .category-card, .products-card, .product-card, .list-group-item, .alert, .modal-content, .table {
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        .list-group-item.active {
+            background-color: var(--brand-accent) !important;
+            border-color: var(--brand-accent) !important;
+            color: #ffffff !important;
+        }
+        .form-control, .form-select {
+            background-color: var(--input-bg) !important;
+            color: var(--input-color) !important;
+            border-color: var(--input-border) !important;
+        }
+        .form-control::placeholder {
+            color: var(--text-muted) !important;
+        }
+        .text-muted, .small.text-muted {
+            color: var(--text-muted) !important;
+        }
+        
+        /* Специфічні темні оверрайди */
+        [data-theme="dark"] .bg-light,
+        [data-theme="dark"] .card-header.bg-light,
+        [data-theme="dark"] .modal-header,
+        [data-theme="dark"] .modal-footer {
+            background-color: var(--bg-gradient-end) !important;
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .table-light,
+        [data-theme="dark"] thead.table-light,
+        [data-theme="dark"] tr.table-light,
+        [data-theme="dark"] th.table-light,
+        [data-theme="dark"] .table thead,
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .btn-light {
+            background-color: var(--brand-soft) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .btn-light:hover {
+            background-color: var(--brand-accent) !important;
+            color: #ffffff !important;
+        }
+        [data-theme="dark"] .text-dark,
+        [data-theme="dark"] a.text-dark,
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .bg-white {
+            background-color: var(--card-bg) !important;
+        }
+        [data-theme="dark"] .text-black {
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .btn-outline-secondary {
+            color: var(--text-muted) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background-color: var(--brand-soft) !important;
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .border,
+        [data-theme="dark"] .border-bottom,
+        [data-theme="dark"] .border-top {
+            border-color: var(--border-color) !important;
+        }
+        
+        /* Dark theme pagination styling overrides */
+        [data-theme="dark"] .page-link {
+            background-color: var(--card-bg) !important;
+            color: var(--brand-accent) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .page-link:hover {
+            background-color: var(--brand-soft) !important;
+            color: #ffffff !important;
+            border-color: var(--brand-accent) !important;
+        }
+        [data-theme="dark"] .page-item.active .page-link {
+            background-color: var(--brand-accent) !important;
+            border-color: var(--brand-accent) !important;
+            color: #ffffff !important;
+        }
+        [data-theme="dark"] .page-item.disabled .page-link {
+            background-color: var(--brand-dark) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border-color) !important;
+        }
+        
         .navbar-custom {
             background: rgba(18, 23, 38, 0.96);
             backdrop-filter: blur(8px);
@@ -61,6 +200,60 @@
         .site-container {
             padding-bottom: 2rem;
         }
+
+        /* Стилі результатів живого пошуку */
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(var(--card-bg-rgb), 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-top: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 2000;
+        }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .search-result-item:last-child {
+            border-bottom: 0;
+        }
+        .search-result-item.active,
+        .search-result-item:hover {
+            background: rgba(27, 63, 174, 0.1);
+            color: var(--text-color);
+        }
+        .search-result-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 0.35rem;
+            margin-right: 0.75rem;
+        }
+        .search-result-info {
+            flex-grow: 1;
+        }
+        .search-result-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 0.1rem;
+        }
+        .search-result-price {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--brand-accent);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -76,21 +269,50 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <form class="d-flex mx-auto my-3 my-lg-0" method="get" action="{% url 'products:product_list' %}">
-                    <input class="form-control me-2 search-input" type="search" name="q"
-                           placeholder="Пошук товару..." value="{{ query|default:'' }}">
-                    <button class="btn btn-light search-btn" type="submit">Знайти</button>
+                <form class="d-flex mx-auto my-3 my-lg-0 position-relative" id="search-form" method="get" action="{% url 'products:product_list' %}">
+                    <input class="form-control me-2 search-input" type="search" name="q" id="search-input" autocomplete="off"
+                           placeholder="{% if LANGUAGE_CODE == 'en' %}Search products...{% else %}Пошук товару...{% endif %}" value="{{ query|default:'' }}">
+                    <button class="btn btn-light search-btn" type="submit">{% if LANGUAGE_CODE == 'en' %}Search{% else %}Знайти{% endif %}</button>
+                    <div id="search-results-dropdown" class="search-results-dropdown d-none"></div>
                 </form>
 
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'products:shipping_payment' %}">
-                            <i class="bi bi-truck me-1"></i>Доставка і оплата
+                            <i class="bi bi-truck me-1"></i>{% if LANGUAGE_CODE == 'en' %}Shipping & Payment{% else %}Доставка і оплата{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'support:ticket_list' %}">
-                            <i class="bi bi-headset me-1"></i>Підтримка
+                            <i class="bi bi-headset me-1"></i>{% if LANGUAGE_CODE == 'en' %}Support{% else %}Підтримка{% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item me-2 d-flex align-items-center">
+                        <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                            <select name="language" onchange="this.form.submit()" class="form-select form-select-sm border-0 rounded-pill px-3 py-1 fw-bold text-center" style="cursor: pointer; font-size: 0.85rem; max-width: 80px; color: var(--text-color) !important; background-color: var(--card-bg) !important; border: 1px solid var(--border-color) !important; outline: none; box-shadow: none;">
+                                {% get_available_languages as LANGUAGES %}
+                                {% for lang in LANGUAGES %}
+                                    <option value="{{ lang.0 }}" {% if lang.0 == LANGUAGE_CODE %}selected{% endif %}>
+                                        {% if lang.0 == 'uk' %}UA{% else %}EN{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </li>
+                    <li class="nav-item">
+                        <button id="theme-toggle" class="btn btn-link text-white nav-link me-2" aria-label="Toggle Theme" style="border: none; background: none;">
+                            <i class="bi bi-sun fs-5 d-none" id="theme-icon-light"></i>
+                            <i class="bi bi-moon-stars fs-5" id="theme-icon-dark"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'products:compare_list' %}" class="nav-link cart-link me-2 position-relative" title="{% if LANGUAGE_CODE == 'en' %}Product Comparison{% else %}Порівняння товарів{% endif %}">
+                            <i class="bi bi-layers fs-5"></i>
+                            <span id="compare-counter" class="badge bg-primary cart-badge {% if not request.session.comparison %}d-none{% endif %}">
+                                {{ request.session.comparison|length }}
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -102,7 +324,7 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'products:wishlist_list' %}">
-                                <i class="bi bi-heart me-1"></i>Бажане
+                                <i class="bi bi-heart me-1"></i>{% if LANGUAGE_CODE == 'en' %}Wishlist{% else %}Бажане{% endif %}
                             </a>
                         </li>
                         <li class="nav-item dropdown">
@@ -111,15 +333,15 @@
                                 <i class="bi bi-person-circle me-2 fs-5"></i>{{ user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>Мій профіль</a></li>
-                                <li><a class="dropdown-item" href="{% url 'products:product_add' %}"><i class="bi bi-plus-circle me-2"></i>Додати товар</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>{% if LANGUAGE_CODE == 'en' %}My Profile{% else %}Мій профіль{% endif %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'products:product_add' %}"><i class="bi bi-plus-circle me-2"></i>{% if LANGUAGE_CODE == 'en' %}Add Product{% else %}Додати товар{% endif %}</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Вийти</a></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>{% if LANGUAGE_CODE == 'en' %}Logout{% else %}Вийти{% endif %}</a></li>
                             </ul>
                         </li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right me-1"></i>Вхід</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}"><i class="bi bi-person-plus me-1"></i>Реєстрація</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right me-1"></i>{% if LANGUAGE_CODE == 'en' %}Login{% else %}Вхід{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}"><i class="bi bi-person-plus me-1"></i>{% if LANGUAGE_CODE == 'en' %}Register{% else %}Реєстрація{% endif %}</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -147,6 +369,133 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- LOGIC FOR DARK MODE ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIconLight = document.getElementById('theme-icon-light');
+        const themeIconDark = document.getElementById('theme-icon-dark');
+
+        function updateThemeIcons(theme) {
+            if (theme === 'dark') {
+                themeIconLight.classList.remove('d-none');
+                themeIconDark.classList.add('d-none');
+            } else {
+                themeIconLight.classList.add('d-none');
+                themeIconDark.classList.remove('d-none');
+            }
+        }
+
+        // Initialize icons on load
+        if (themeToggleBtn && themeIconLight && themeIconDark) {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            updateThemeIcons(currentTheme);
+
+            themeToggleBtn.addEventListener('click', function() {
+                const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = activeTheme === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcons(newTheme);
+            });
+        }
+
+
+        // --- LOGIC FOR LIVE SEARCH ---
+        const searchInput = document.getElementById('search-input');
+        const searchDropdown = document.getElementById('search-results-dropdown');
+        let debounceTimer;
+
+        if (searchInput && searchDropdown) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    searchDropdown.innerHTML = '';
+                    searchDropdown.classList.add('d-none');
+                    return;
+                }
+
+                debounceTimer = setTimeout(() => {
+                    fetch(`/products/search/ajax/?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length === 0) {
+                                searchDropdown.innerHTML = '<div class="p-3 text-muted text-center small">Товарів не знайдено 🔍</div>';
+                                searchDropdown.classList.remove('d-none');
+                                return;
+                            }
+
+                            let html = '';
+                            data.forEach((item, index) => {
+                                const imgHtml = item.image 
+                                    ? `<img src="${item.image}" class="search-result-img" alt="${item.name}">`
+                                    : `<div class="bg-light rounded d-flex align-items-center justify-content-center search-result-img"><small class="text-muted">📦</small></div>`;
+                                
+                                html += `
+                                    <a href="${item.url}" class="search-result-item" data-index="${index}">
+                                        ${imgHtml}
+                                        <div class="search-result-info">
+                                            <div class="search-result-name">${item.name}</div>
+                                            <div class="search-result-price">${item.price} грн</div>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            searchDropdown.innerHTML = html;
+                            searchDropdown.classList.remove('d-none');
+                        })
+                        .catch(err => console.error("Search AJAX error:", err));
+                }, 250);
+            });
+
+            // Keyboard navigation (ArrowUp, ArrowDown, Enter)
+            searchInput.addEventListener('keydown', function(e) {
+                const items = searchDropdown.querySelectorAll('.search-result-item');
+                if (items.length === 0) return;
+
+                let activeItem = searchDropdown.querySelector('.search-result-item.active');
+                let activeIndex = activeItem ? parseInt(activeItem.getAttribute('data-index')) : -1;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (activeIndex < items.length - 1) {
+                        if (activeItem) activeItem.classList.remove('active');
+                        activeIndex++;
+                        items[activeIndex].classList.add('active');
+                        items[activeIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (activeIndex > 0) {
+                        if (activeItem) activeItem.classList.remove('active');
+                        activeIndex--;
+                        items[activeIndex].classList.add('active');
+                        items[activeIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                } else if (e.key === 'Enter') {
+                    if (activeItem) {
+                        e.preventDefault();
+                        window.location.href = activeItem.getAttribute('href');
+                    }
+                }
+            });
+
+            // Close search results dropdown if clicked outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                    searchDropdown.classList.add('d-none');
+                }
+            });
+
+            // Re-open on focus if search contains valid query
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2 && searchDropdown.children.length > 0) {
+                    searchDropdown.classList.remove('d-none');
+                }
+            });
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

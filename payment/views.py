@@ -32,19 +32,44 @@ def payment_process(request):
         messages.info(request, "Це замовлення вже оплачене.")
         return redirect("payment:completed")
 
+    payment_method = getattr(order, 'payment_method', 'card')
+    if payment_method == 'cod':
+        return redirect('payment:completed')
+
     success_url = request.build_absolute_uri(reverse('payment:completed'))
     cancel_url = request.build_absolute_uri(reverse('payment:canceled'))
 
+    from decimal import Decimal
+
     line_items = []
-    for item in order.items.all():
+    if payment_method == 'partial':
+        total_after_discount = order.get_total_after_discount()
+        downpayment_amount = (total_after_discount * Decimal("0.10")).quantize(Decimal("0.01"))
         line_items.append({
             'price_data': {
-                'unit_amount': int(item.price * 100),
+                'unit_amount': int(downpayment_amount * 100),
                 'currency': 'uah',
-                'product_data': {'name': item.product.name},
+                'product_data': {
+                    'name': f'Передплата 10% за замовлення #{order.id}',
+                },
             },
-            'quantity': item.quantity,
+            'quantity': 1,
         })
+    else:
+        total_cost = order.get_total_cost()
+        discount_amount = order.get_discount_amount()
+        discount_ratio = (discount_amount / total_cost) if total_cost > 0 else Decimal("0.00")
+        discount_multiplier = Decimal("1") - discount_ratio
+        for item in order.items.all():
+            discounted_price = (item.price * discount_multiplier).quantize(Decimal("0.01"))
+            line_items.append({
+                'price_data': {
+                    'unit_amount': int(discounted_price * 100),
+                    'currency': 'uah',
+                    'product_data': {'name': item.product.name},
+                },
+                'quantity': item.quantity,
+            })
 
     if not line_items:
         messages.error(request, 'Замовлення не містить товарів. Додайте товари в кошик і спробуйте знову.')
@@ -101,7 +126,7 @@ def stripe_webhook(request):
                 logger.warning("Invalid client_reference_id in Stripe session: %s", client_reference_id)
                 return HttpResponse(status=400)
 
-            updated = Order.objects.filter(id=order_id, paid=False).update(paid=True)
+            updated = Order.objects.filter(id=order_id, paid=False).update(paid=True, status='paid')
             if not updated and not Order.objects.filter(id=order_id).exists():
                 logger.warning("Order not found for Stripe session: %s", order_id)
                 return HttpResponse(status=404)

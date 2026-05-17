@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}{{ product.name }}{% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
@@ -27,16 +29,19 @@
                     <div class="d-flex gap-2 mt-3">
                         <form action="{% url 'cart:cart_add' product.id %}" method="post">
                             {% csrf_token %}
-                            <button class="btn btn-primary">До кошика</button>
+                            <button class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Add to Cart{% else %}До кошика{% endif %}</button>
                         </form>
+                        <button type="button" class="btn {% if product.id in request.session.comparison %}btn-primary{% else %}btn-outline-primary{% endif %} js-compare-toggle" data-id="{{ product.id }}">
+                            <i class="bi bi-layers{% if product.id in request.session.comparison %}-fill{% endif %}"></i> {% if LANGUAGE_CODE == 'en' %}Compare{% else %}Порівняти{% endif %}
+                        </button>
                         {% if user.is_authenticated %}
                             <a href="{% url 'products:wishlist_toggle' product.id %}" class="btn btn-outline-danger">
-                                <i class="bi bi-heart"></i> В бажане
+                                <i class="bi bi-heart"></i> {% if LANGUAGE_CODE == 'en' %}To Wishlist{% else %}В бажане{% endif %}
                             </a>
                         {% endif %}
                     </div>
                     {% if avg_rating %}
-                        <div class="mt-3 text-warning">Середній рейтинг: {{ avg_rating|floatformat:1 }} ★</div>
+                        <div class="mt-3 text-warning">{% if LANGUAGE_CODE == 'en' %}Average rating{% else %}Середній рейтинг{% endif %}: {{ avg_rating|floatformat:1 }} ★</div>
                     {% endif %}
                 </div>
             </div>
@@ -45,7 +50,7 @@
 
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
-            <h4 class="mb-3">Відгуки</h4>
+            <h4 class="mb-3">{% if LANGUAGE_CODE == 'en' %}Reviews{% else %}Відгуки{% endif %}</h4>
             {% if user.is_authenticated and can_review %}
                 <form method="post" action="{% url 'products:review_create' product.id %}" class="mb-4">
                     {% csrf_token %}
@@ -54,13 +59,13 @@
                         <div class="col-md-9">{{ review_form.comment }}</div>
                     </div>
                     <button type="submit" class="btn btn-success mt-2">
-                        {% if existing_review %}Оновити відгук{% else %}Залишити відгук{% endif %}
+                        {% if existing_review %}{% if LANGUAGE_CODE == 'en' %}Update Review{% else %}Оновити відгук{% endif %}{% else %}{% if LANGUAGE_CODE == 'en' %}Submit Review{% else %}Залишити відгук{% endif %}{% endif %}
                     </button>
                 </form>
             {% elif user.is_authenticated %}
-                <p class="text-muted">Відгук можна залишити тільки після покупки цього товару.</p>
+                <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}You can only leave a review after purchasing this product.{% else %}Відгук можна залишити тільки після покупки цього товару.{% endif %}</p>
             {% else %}
-                <p class="text-muted">Увійдіть, щоб залишити відгук.</p>
+                <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}Please login to leave a review.{% else %}Увійдіть, щоб залишити відгук.{% endif %}</p>
             {% endif %}
 
             {% for review in reviews %}
@@ -73,14 +78,14 @@
                     <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
                 </div>
             {% empty %}
-                <p class="text-muted">Поки немає відгуків.</p>
+                <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}No reviews yet.{% else %}Поки немає відгуків.{% endif %}</p>
             {% endfor %}
         </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
-            <h4 class="mb-3">З цим товаром також купують</h4>
+            <h4 class="mb-3">{% if LANGUAGE_CODE == 'en' %}People also buy{% else %}З цим товаром також купують{% endif %}</h4>
             <div class="row">
                 {% for item in recommendations %}
                     <div class="col-md-3 mb-3">
@@ -100,10 +105,48 @@
                         </a>
                     </div>
                 {% empty %}
-                    <p class="text-muted">Рекомендації з'являться після перших покупок.</p>
+                    <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}Recommendations will appear after the first purchases.{% else %}Рекомендації з'являться після перших покупок.{% endif %}</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll('.js-compare-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const productId = btn.dataset.id;
+                fetch(`/compare/toggle/${productId}/`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const icon = btn.querySelector('i');
+                    if (data.added) {
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-primary');
+                        btn.innerHTML = `<i class="bi bi-layers-fill"></i> Порівняти`;
+                    } else {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                        btn.innerHTML = `<i class="bi bi-layers"></i> Порівняти`;
+                    }
+                    const counter = document.getElementById('compare-counter');
+                    if (counter) {
+                        counter.textContent = data.count;
+                        if (data.count > 0) {
+                            counter.classList.remove('d-none');
+                        } else {
+                            counter.classList.add('d-none');
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

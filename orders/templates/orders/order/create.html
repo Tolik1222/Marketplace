@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Оформлення замовлення{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Checkout{% else %}Оформлення замовлення{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -66,22 +67,71 @@
         border-radius: 999px;
         padding: 0.35rem 0.65rem;
     }
+
+    /* Dark Mode scoped overrides */
+    [data-theme="dark"] .checkout-card {
+        background: var(--card-bg) !important;
+        box-shadow: none !important;
+    }
+    [data-theme="dark"] .checkout-title {
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .checkout-subtitle {
+        color: var(--text-muted) !important;
+    }
+    [data-theme="dark"] .checkout-field label {
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .checkout-field .form-control {
+        border-color: var(--border-color) !important;
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .checkout-field .form-control::placeholder {
+        color: #6c757d !important;
+    }
+    [data-theme="dark"] .checkout-field .form-select {
+        border-color: var(--border-color) !important;
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .checkout-badge {
+        background: #2a3c75 !important;
+        color: #adc6ff !important;
+    }
+    [data-theme="dark"] .summary-card {
+        background: var(--card-bg) !important;
+        box-shadow: none !important;
+        border: 1px solid var(--border-color) !important;
+    }
+    [data-theme="dark"] .summary-head {
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .summary-row {
+        background: transparent !important;
+        color: var(--text-color) !important;
+        border-bottom-color: var(--border-color) !important;
+    }
+    [data-theme="dark"] .total-row {
+        color: var(--primary-color) !important;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container pb-3">
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card checkout-card p-4 p-md-5">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
                     <div>
-                        <h3 class="checkout-title mb-1">Деталі доставки</h3>
-                        <p class="checkout-subtitle mb-0">Заповніть дані, щоб швидко перейти до оплати</p>
+                        <h3 class="checkout-title mb-1">{% if LANGUAGE_CODE == 'en' %}Delivery Details{% else %}Деталі доставки{% endif %}</h3>
+                        <p class="checkout-subtitle mb-0">{% if LANGUAGE_CODE == 'en' %}Fill in the details to proceed to payment{% else %}Заповніть дані, щоб швидко перейти до оплати{% endif %}</p>
                     </div>
                     <span class="checkout-badge">
                         <i class="bi bi-shield-check"></i>
-                        Безпечне оформлення
+                        {% if LANGUAGE_CODE == 'en' %}Secure Checkout{% else %}Безпечне оформлення{% endif %}
                     </span>
                 </div>
 
@@ -103,49 +153,268 @@
                             {{ form.email }}
                             {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
                         </div>
+
+                        <!-- Нова інтерактивна доставка -->
+                        <div class="col-md-6 checkout-field">
+                            <label for="{{ form.delivery_service.id_for_label }}">{{ form.delivery_service.label }}</label>
+                            {{ form.delivery_service }}
+                            {% if form.delivery_service.errors %}<div class="text-danger small mt-1">{{ form.delivery_service.errors|striptags }}</div>{% endif %}
+                        </div>
+
+                        <!-- Нове динамічне поле міста з автокомплітом -->
+                        <div class="col-md-6 checkout-field position-relative" id="city-autocomplete-wrapper">
+                            <label for="city-autocomplete-input">{% if LANGUAGE_CODE == 'en' %}Delivery City{% else %}Місто доставки{% endif %}</label>
+                            <input type="text" id="city-autocomplete-input" class="form-control form-control-lg" placeholder="{% if LANGUAGE_CODE == 'en' %}Enter city name (e.g. Kyiv)...{% else %}Введіть назву міста (наприклад: Київ)...{% endif %}" autocomplete="off">
+                            <div id="city-autocomplete-dropdown" class="search-results-dropdown d-none" style="position: absolute; width: 100%; max-height: 250px; overflow-y: auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; z-index: 1050; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+                        </div>
+
+                        <!-- Скриті реальні поля форми Django -->
+                        <div style="display:none;">
+                            {{ form.city }}
+                            {{ form.branch }}
+                        </div>
+
+                        <div class="col-12 checkout-field" id="branch-dropdown-wrapper">
+                            <label for="branch-select">{% if LANGUAGE_CODE == 'en' %}Postal Branch{% else %}Відділення пошти{% endif %}</label>
+                            <select id="branch-select" class="form-select form-select-lg" disabled>
+                                <option value="" disabled selected>{% if LANGUAGE_CODE == 'en' %}Please choose a city first...{% else %}Спочатку оберіть місто...{% endif %}</option>
+                            </select>
+                        </div>
+
                         <div class="col-12 checkout-field">
                             <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
                             {{ form.address }}
                             {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors|striptags }}</div>{% endif %}
+                            <small class="text-muted">{% if LANGUAGE_CODE == 'en' %}Fill in only if needed (e.g. street, building, apartment for home delivery).{% else %}Заповнюйте тільки за потреби (наприклад, вулиця, будинок, квартира для адресного доставлення).{% endif %}</small>
+                        </div>
+
+                        <div class="col-12 checkout-field mt-3">
+                            <label for="{{ form.payment_method.id_for_label }}">{{ form.payment_method.label }}</label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}<div class="text-danger small mt-1">{{ form.payment_method.errors|striptags }}</div>{% endif %}
                         </div>
                     </div>
                     <button type="submit" class="btn btn-success btn-lg w-100 mt-4 checkout-submit">
-                        Підтвердити замовлення
+                        {% if LANGUAGE_CODE == 'en' %}Place Order{% else %}Підтвердити замовлення{% endif %}
                     </button>
                 </form>
             </div>
         </div>
         <div class="col-lg-4">
             <div class="card summary-card p-4">
-                <h4 class="summary-head mb-3">Ваше замовлення</h4>
+                <h4 class="summary-head mb-3">{% if LANGUAGE_CODE == 'en' %}Your Order{% else %}Ваше замовлення{% endif %}</h4>
                 <ul class="list-group list-group-flush">
                     {% for item in cart %}
                         <li class="list-group-item d-flex justify-content-between summary-row">
                             <span>
                                 {{ item.product.name }} <span class="text-muted">(x{{ item.quantity }})</span>
                                 {% if item.has_product_discount %}
-                                    <div class="small text-success">Акція -{{ item.product.discount_percent }}%</div>
+                                    <div class="small text-success">{% if LANGUAGE_CODE == 'en' %}Promo{% else %}Акція{% endif %} -{{ item.product.discount_percent }}%</div>
                                 {% endif %}
                             </span>
                             <span class="fw-semibold">{{ item.total_price }} грн</span>
                         </li>
                     {% endfor %}
                     <li class="list-group-item d-flex justify-content-between summary-row">
-                        Сума: <span class="fw-semibold">{{ cart.get_total_price }} грн</span>
+                        {% if LANGUAGE_CODE == 'en' %}Subtotal:{% else %}Сума:{% endif %} <span class="fw-semibold">{{ cart.get_total_price }} грн</span>
                     </li>
                     {% with discount=cart.get_discount %}
                         {% if discount %}
                             <li class="list-group-item d-flex justify-content-between summary-row text-success">
-                                Знижка: <span class="fw-semibold">-{{ discount|floatformat:2 }} грн</span>
+                                {% if LANGUAGE_CODE == 'en' %}Discount:{% else %}Знижка:{% endif %} <span class="fw-semibold">-{{ discount|floatformat:2 }} грн</span>
                             </li>
                         {% endif %}
                     {% endwith %}
                     <li class="list-group-item d-flex justify-content-between fw-bold summary-row total-row">
-                        Разом: <span>{{ cart.get_total_price_after_discount|floatformat:2 }} грн</span>
+                        {% if LANGUAGE_CODE == 'en' %}Total:{% else %}Разом:{% endif %} <span>{{ cart.get_total_price_after_discount|floatformat:2 }} грн</span>
                     </li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const currentLanguageCode = "{{ LANGUAGE_CODE }}";
+
+        // Елементи Django форми (приховані)
+        const djangoServiceInput = document.getElementById("id_delivery_service");
+        const djangoCityInput = document.getElementById("id_city");
+        const djangoBranchInput = document.getElementById("id_branch");
+
+        // Інтерактивні елементи інтерфейсу
+        const cityInput = document.getElementById("city-autocomplete-input");
+        const cityDropdown = document.getElementById("city-autocomplete-dropdown");
+        const branchSelect = document.getElementById("branch-select");
+
+        let debounceTimer;
+
+        // Auto-populate inputs if they have initial values (e.g. on validation errors)
+        if (djangoCityInput.value) {
+            cityInput.value = djangoCityInput.value;
+            fetchBranchesByName(djangoCityInput.value);
+        }
+
+        // Get endpoint URLs based on selected carrier service
+        function getEndpoints() {
+            const service = djangoServiceInput.value;
+            if (service === "ukr_poshta" || service === "ukrposhta") {
+                return {
+                    cities: "/orders/ukrposhta/cities/",
+                    branches: "/orders/ukrposhta/branches/"
+                };
+            } else if (service === "meest") {
+                return {
+                    cities: "/orders/meest/cities/",
+                    branches: "/orders/meest/branches/"
+                };
+            } else {
+                return {
+                    cities: "/orders/novaposhta/cities/",
+                    branches: "/orders/novaposhta/branches/"
+                };
+            }
+        }
+
+        // Clear and reset autocomplete values when changing delivery service
+        djangoServiceInput.addEventListener("change", () => {
+            cityInput.value = "";
+            djangoCityInput.value = "";
+            djangoBranchInput.value = "";
+            branchSelect.innerHTML = `<option value="" disabled selected>${currentLanguageCode === 'en' ? 'First select a city...' : 'Спочатку оберіть місто...'}</option>`;
+            branchSelect.disabled = true;
+            cityDropdown.classList.add("d-none");
+        });
+
+        // Live autocomplete for cities
+        cityInput.addEventListener("input", () => {
+            clearTimeout(debounceTimer);
+            const query = cityInput.value.trim();
+            if (query.length < 2) {
+                cityDropdown.classList.add("d-none");
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                const endpoints = getEndpoints();
+                fetch(`${endpoints.cities}?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        cityDropdown.innerHTML = "";
+                        if (data.length === 0) {
+                            const emptyItem = document.createElement("div");
+                            emptyItem.className = "p-2 text-muted small text-center";
+                            emptyItem.textContent = currentLanguageCode === 'en' ? "Nothing found" : "Нічого не знайдено";
+                            cityDropdown.appendChild(emptyItem);
+                        } else {
+                            data.forEach(item => {
+                                const btn = document.createElement("button");
+                                btn.type = "button";
+                                btn.className = "w-100 text-start border-0 py-2 px-3 bg-transparent search-result-item";
+                                btn.style.color = "var(--text-color)";
+                                btn.textContent = item.name;
+                                btn.addEventListener("click", () => {
+                                    cityInput.value = item.name;
+                                    djangoCityInput.value = item.name;
+                                    cityDropdown.classList.add("d-none");
+                                    
+                                    fetchBranches(item.ref, item.name);
+                                });
+                                cityDropdown.appendChild(btn);
+                            });
+                        }
+                        cityDropdown.classList.remove("d-none");
+                    });
+            }, 250);
+        });
+
+        // Hide city dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
+                cityDropdown.classList.add("d-none");
+            }
+        });
+
+        // Function to fetch branches using cityRef or cityName
+        function fetchBranches(cityRef, cityName) {
+            branchSelect.disabled = true;
+            branchSelect.innerHTML = `<option value="" disabled selected>${currentLanguageCode === 'en' ? 'Loading branches...' : 'Завантаження відділень...'}</option>`;
+
+            const endpoints = getEndpoints();
+            fetch(`${endpoints.branches}?city_ref=${encodeURIComponent(cityRef)}&city_name=${encodeURIComponent(cityName)}`)
+                .then(res => res.json())
+                .then(data => {
+                    branchSelect.innerHTML = "";
+                    if (data.length === 0) {
+                        const opt = document.createElement("option");
+                        opt.value = "";
+                        opt.disabled = true;
+                        opt.selected = true;
+                        opt.textContent = currentLanguageCode === 'en' ? "No branches in this city" : "У цьому місті немає відділень";
+                        branchSelect.appendChild(opt);
+                    } else {
+                        const defaultOpt = document.createElement("option");
+                        defaultOpt.value = "";
+                        defaultOpt.disabled = true;
+                        defaultOpt.selected = true;
+                        defaultOpt.textContent = currentLanguageCode === 'en' ? "Select a branch..." : "Оберіть відділення...";
+                        branchSelect.appendChild(defaultOpt);
+
+                        data.forEach(branch => {
+                            const opt = document.createElement("option");
+                            opt.value = branch.name;
+                            opt.textContent = branch.name;
+                            if (djangoBranchInput.value === branch.name) {
+                                opt.selected = true;
+                            }
+                            branchSelect.appendChild(opt);
+                        });
+                        branchSelect.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    branchSelect.innerHTML = `<option value="" disabled selected>${currentLanguageCode === 'en' ? 'Loading error. Try again later.' : 'Помилка завантаження. Спробуйте пізніше.'}</option>`;
+                });
+        }
+
+        // Helper to fetch branches by city name (fallback when ref is not saved)
+        function fetchBranchesByName(cityName) {
+            const endpoints = getEndpoints();
+            fetch(`${endpoints.cities}?q=${encodeURIComponent(cityName)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const city = data[0];
+                        fetchBranches(city.ref, city.name);
+                    }
+                });
+        }
+
+        // When branch select changes, update django hidden field
+        branchSelect.addEventListener("change", () => {
+            djangoBranchInput.value = branchSelect.value;
+        });
+
+        // Reset branch when city input changes manually
+        cityInput.addEventListener("change", () => {
+            djangoCityInput.value = cityInput.value;
+            djangoBranchInput.value = "";
+            branchSelect.value = "";
+        });
+
+        // If delivery service changes, refresh branches
+        djangoServiceInput.addEventListener("change", () => {
+            djangoBranchInput.value = "";
+            branchSelect.innerHTML = `<option value="" disabled selected>${currentLanguageCode === 'en' ? 'First select a city...' : 'Спочатку оберіть місто...'}</option>`;
+            branchSelect.value = "";
+            branchSelect.disabled = true;
+            if (djangoCityInput.value) {
+                fetchBranchesByName(djangoCityInput.value);
+            }
+        });
+    });
+</script>
 {% endblock %}

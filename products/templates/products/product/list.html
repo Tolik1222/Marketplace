@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}Super Store 2026{% endblock %}
 
@@ -76,16 +77,17 @@
 {% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="row">
         <div class="col-md-3">
             <div class="card category-card sticky-top" style="top: 1rem;">
                 <div class="card-body">
-                    <h5 class="mb-3"><i class="bi bi-grid-3x3-gap me-2"></i>Категорії</h5>
+                    <h5 class="mb-3"><i class="bi bi-grid-3x3-gap me-2"></i>{% if LANGUAGE_CODE == 'en' %}Categories{% else %}Категорії{% endif %}</h5>
                     <div class="list-group category-list">
                         <a href="{% url 'products:product_list' %}" 
                            class="list-group-item list-group-item-action {% if not category %}active{% endif %}">
-                            Всі товари
+                            {% if LANGUAGE_CODE == 'en' %}All Products{% else %}Всі товари{% endif %}
                         </a>
                         {% for c in categories %}
                             <a href="{% url 'products:product_list_by_category' c.slug %}" 
@@ -100,8 +102,8 @@
                 <div class="card discount-card mt-3">
                     <div class="card-body p-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0"><i class="bi bi-fire me-1"></i>Знижки</h6>
-                            <span class="badge text-bg-light">оновлення 5с</span>
+                            <h6 class="mb-0"><i class="bi bi-fire me-1"></i>{% if LANGUAGE_CODE == 'en' %}Sales{% else %}Знижки{% endif %}</h6>
+                            <span class="badge text-bg-light">{% if LANGUAGE_CODE == 'en' %}auto-play 5s{% else %}оновлення 5с{% endif %}</span>
                         </div>
                         <div class="js-discount-slider">
                             {% for discounted in discounted_products %}
@@ -112,12 +114,12 @@
                                         <img src="https://via.placeholder.com/300x160?text=Sale" class="discount-image mb-2" alt="{{ discounted.name }}">
                                     {% endif %}
                                     <div class="fw-semibold">{{ discounted.name }}</div>
-                                    <div class="small mb-2">Знижка -{{ discounted.discount_percent }}%</div>
+                                    <div class="small mb-2">{% if LANGUAGE_CODE == 'en' %}Discount -{{ discounted.discount_percent }}%{% else %}Знижка -{{ discounted.discount_percent }}%{% endif %}</div>
                                     <div class="d-flex align-items-center gap-2 mb-2">
                                         <span class="fw-bold">{{ discounted.get_discounted_price }} грн</span>
                                         <span class="text-white-50 text-decoration-line-through">{{ discounted.price }} грн</span>
                                     </div>
-                                    <a href="{% url 'products:product_detail' discounted.id discounted.slug %}" class="btn btn-light btn-sm w-100">Переглянути</a>
+                                    <a href="{% url 'products:product_detail' discounted.id discounted.slug %}" class="btn btn-light btn-sm w-100">{% if LANGUAGE_CODE == 'en' %}View{% else %}Переглянути{% endif %}</a>
                                 </div>
                             {% endfor %}
                         </div>
@@ -130,8 +132,8 @@
             <div class="card products-card">
                 <div class="card-body p-4">
                     <h3 class="mb-4">
-                        {% if category %}{{ category.name }}{% else %}Всі товари{% endif %}
-                        {% if query %}<small class="text-muted"> — результати для "{{ query }}"</small>{% endif %}
+                        {% if category %}{{ category.name }}{% else %}{% if LANGUAGE_CODE == 'en' %}All Products{% else %}Всі товари{% endif %}{% endif %}
+                        {% if query %}<small class="text-muted"> — {% if LANGUAGE_CODE == 'en' %}results for{% else %}результати для{% endif %} "{{ query }}"</small>{% endif %}
                     </h3>
 
                     <form method="get" class="row g-2 align-items-end mb-4">
@@ -139,33 +141,33 @@
                             <input type="hidden" name="q" value="{{ query }}">
                         {% endif %}
                         <div class="col-6 col-md-3">
-                            <label for="id_price_min" class="form-label small text-muted mb-1">Ціна від</label>
+                            <label for="id_price_min" class="form-label small text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Price from{% else %}Ціна від{% endif %}</label>
                             <input id="id_price_min" type="number" step="0.01" min="0" name="price_min" value="{{ price_min }}" class="form-control" placeholder="0">
                         </div>
                         <div class="col-6 col-md-3">
-                            <label for="id_price_max" class="form-label small text-muted mb-1">Ціна до</label>
+                            <label for="id_price_max" class="form-label small text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Price to{% else %}Ціна до{% endif %}</label>
                             <input id="id_price_max" type="number" step="0.01" min="0" name="price_max" value="{{ price_max }}" class="form-control" placeholder="10000">
                         </div>
                         <div class="col-6 col-md-3">
-                            <label for="id_availability" class="form-label small text-muted mb-1">Наявність</label>
+                            <label for="id_availability" class="form-label small text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Availability{% else %}Наявність{% endif %}</label>
                             <select id="id_availability" name="availability" class="form-select">
-                                <option value="all" {% if availability == "all" %}selected{% endif %}>Всі</option>
-                                <option value="in_stock" {% if availability == "in_stock" %}selected{% endif %}>Лише в наявності</option>
+                                <option value="all" {% if availability == "all" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}All{% else %}Всі{% endif %}</option>
+                                <option value="in_stock" {% if availability == "in_stock" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}In stock only{% else %}Лише в наявності{% endif %}</option>
                             </select>
                         </div>
                         <div class="col-6 col-md-3">
-                            <label for="id_sort" class="form-label small text-muted mb-1">Сортування</label>
+                            <label for="id_sort" class="form-label small text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Sorting{% else %}Сортування{% endif %}</label>
                             <select id="id_sort" name="sort" class="form-select">
-                                <option value="newest" {% if sort == "newest" %}selected{% endif %}>Спочатку нові</option>
-                                <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>Ціна: від дешевих</option>
-                                <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>Ціна: від дорогих</option>
-                                <option value="name_asc" {% if sort == "name_asc" %}selected{% endif %}>Назва: A-Я</option>
-                                <option value="name_desc" {% if sort == "name_desc" %}selected{% endif %}>Назва: Я-A</option>
+                                <option value="newest" {% if sort == "newest" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Newest first{% else %}Спочатку нові{% endif %}</option>
+                                <option value="price_asc" {% if sort == "price_asc" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Price: low to high{% else %}Ціна: від дешевих{% endif %}</option>
+                                <option value="price_desc" {% if sort == "price_desc" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Price: high to low{% else %}Ціна: від дорогих{% endif %}</option>
+                                <option value="name_asc" {% if sort == "name_asc" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Name: A-Z{% else %}Назва: A-Я{% endif %}</option>
+                                <option value="name_desc" {% if sort == "name_desc" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Name: Z-A{% else %}Назва: Я-A{% endif %}</option>
                             </select>
                         </div>
                         <div class="col-12 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Застосувати</button>
-                            <a href="{% if category %}{% url 'products:product_list_by_category' category.slug %}{% else %}{% url 'products:product_list' %}{% endif %}" class="btn btn-outline-secondary">Скинути</a>
+                            <button type="submit" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Apply{% else %}Застосувати{% endif %}</button>
+                            <a href="{% if category %}{% url 'products:product_list_by_category' category.slug %}{% else %}{% url 'products:product_list' %}{% endif %}" class="btn btn-outline-secondary">{% if LANGUAGE_CODE == 'en' %}Reset{% else %}Скинути{% endif %}</a>
                         </div>
                     </form>
 
@@ -176,17 +178,22 @@
                                     {% if product.image %}
                                         <img src="{{ product.image.url }}" class="product-image js-product-image" alt="{{ product.name }}">
                                     {% else %}
-                                        <img src="https://via.placeholder.com/300x210?text=No+Image" class="product-image js-product-image" alt="Немає фото">
+                                        <img src="https://via.placeholder.com/300x210?text=No+Image" class="product-image js-product-image" alt="{% if LANGUAGE_CODE == 'en' %}No image{% else %}Немає фото{% endif %}">
                                     {% endif %}
 
                                     <div class="card-body d-flex flex-column">
                                         <div class="d-flex justify-content-between align-items-start gap-2">
                                             <h5 class="card-title mb-1">{{ product.name }}</h5>
-                                            {% if user.is_authenticated %}
-                                                <a href="{% url 'products:wishlist_toggle' product.id %}" class="btn btn-sm {% if product.id in wishlist_ids %}btn-danger{% else %}btn-outline-danger{% endif %}">
-                                                    <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill{% endif %}"></i>
-                                                </a>
-                                            {% endif %}
+                                            <div class="d-flex gap-1">
+                                                <button type="button" class="btn btn-sm {% if product.id in request.session.comparison %}btn-primary{% else %}btn-outline-primary{% endif %} js-compare-toggle" data-id="{{ product.id }}" title="{% if LANGUAGE_CODE == 'en' %}To Comparison{% else %}До порівняння{% endif %}">
+                                                    <i class="bi bi-layers{% if product.id in request.session.comparison %}-fill{% endif %}"></i>
+                                                </button>
+                                                {% if user.is_authenticated %}
+                                                    <a href="{% url 'products:wishlist_toggle' product.id %}" class="btn btn-sm {% if product.id in wishlist_ids %}btn-danger{% else %}btn-outline-danger{% endif %}" title="{% if LANGUAGE_CODE == 'en' %}Wishlist{% else %}Обране{% endif %}">
+                                                        <i class="bi bi-heart{% if product.id in wishlist_ids %}-fill{% endif %}"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                         <p class="card-text text-muted small">{{ product.description|truncatewords:10 }}</p>
                                         <div class="mt-auto">
@@ -199,10 +206,10 @@
                                             {% else %}
                                                 <p class="h5 text-primary">{{ product.price }} грн</p>
                                             {% endif %}
-                                            <a href="{% url 'products:product_detail' product.id product.slug %}" class="btn btn-light border w-100 mb-2">Детальніше</a>
+                                            <a href="{% url 'products:product_detail' product.id product.slug %}" class="btn btn-light border w-100 mb-2">{% if LANGUAGE_CODE == 'en' %}Details{% else %}Детальніше{% endif %}</a>
                                             <form action="{% url 'cart:cart_add' product.id %}" method="post" class="js-add-to-cart-form">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-primary w-100 mt-2 add-to-cart-btn js-add-to-cart-btn">До кошика</button>
+                                                <button type="submit" class="btn btn-primary w-100 mt-2 add-to-cart-btn js-add-to-cart-btn">{% if LANGUAGE_CODE == 'en' %}Add to Cart{% else %}До кошика{% endif %}</button>
                                             </form>
                                         </div>
                                     </div>
@@ -210,11 +217,54 @@
                             </div>
                         {% empty %}
                             <div class="col-12 text-center mt-5">
-                                <p class="h4 text-muted">Товарів не знайдено 🔍</p>
-                                <a href="{% url 'products:product_list' %}" class="btn btn-secondary mt-2">Скинути пошук</a>
+                                <p class="h4 text-muted">{% if LANGUAGE_CODE == 'en' %}No products found{% else %}Товарів не знайдено{% endif %} 🔍</p>
+                                <a href="{% url 'products:product_list' %}" class="btn btn-secondary mt-2">{% if LANGUAGE_CODE == 'en' %}Reset Search{% else %}Скинути пошук{% endif %}</a>
                             </div>
                         {% endfor %}
                     </div>
+
+                    <!-- Пагінація -->
+                    {% if products.has_other_pages %}
+                        <nav aria-label="Пагінація товарів" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if products.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Попередня">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in products.paginator.page_range %}
+                                    {% if products.number == num %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if products.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ products.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Наступна">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -327,5 +377,44 @@
             slides[activeIndex].classList.add('is-active');
         }, 5000);
     }
+
+    // Product comparison dynamic AJAX toggler
+    document.querySelectorAll('.js-compare-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const productId = btn.dataset.id;
+            fetch(`/compare/toggle/${productId}/`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const icon = btn.querySelector('i');
+                if (data.added) {
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                    if (icon) {
+                        icon.classList.remove('bi-layers');
+                        icon.classList.add('bi-layers-fill');
+                    }
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                    if (icon) {
+                        icon.classList.remove('bi-layers-fill');
+                        icon.classList.add('bi-layers');
+                    }
+                }
+                const counter = document.getElementById('compare-counter');
+                if (counter) {
+                    counter.textContent = data.count;
+                    if (data.count > 0) {
+                        counter.classList.remove('d-none');
+                    } else {
+                        counter.classList.add('d-none');
+                    }
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

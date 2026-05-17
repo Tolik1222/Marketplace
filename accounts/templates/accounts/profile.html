@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Мій профіль{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}My Profile{% else %}Мій профіль{% endif %}{% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container mt-4">
     {% if messages %}
         {% for message in messages %}
@@ -27,11 +29,17 @@
                     <p class="text-muted mb-3">@{{ user.username }}</p>
                     
                     <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                        <i class="bi bi-pencil"></i> Редагувати профіль
+                        <i class="bi bi-pencil"></i> {% if LANGUAGE_CODE == 'en' %}Edit Profile{% else %}Редагувати профіль{% endif %}
                     </a>
                     
+                    {% if user.is_staff %}
+                        <a href="{% url 'accounts:seller_dashboard' %}" class="btn btn-primary btn-sm w-100 mb-2">
+                            <i class="bi bi-speedometer2"></i> {% if LANGUAGE_CODE == 'en' %}Seller Dashboard{% else %}Кабінет продавця{% endif %}
+                        </a>
+                    {% endif %}
+                    
                     <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm w-100">
-                        <i class="bi bi-box-arrow-right"></i> Вийти
+                        <i class="bi bi-box-arrow-right"></i> {% if LANGUAGE_CODE == 'en' %}Logout{% else %}Вийти{% endif %}
                     </a>
                 </div>
             </div>
@@ -39,14 +47,14 @@
             <!-- Інформація про користувача -->
             <div class="card shadow-sm">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">Особиста інформація</h6>
+                    <h6 class="mb-0">{% if LANGUAGE_CODE == 'en' %}Personal Information{% else %}Особиста інформація{% endif %}</h6>
                 </div>
                 <div class="card-body">
                     <p class="mb-2">
                         <strong>Email:</strong> {{ user.email|default:"Не вказано" }}
                     </p>
                     <p class="mb-0">
-                        <strong>Дата реєстрації:</strong> {{ user.date_joined|date:"d.m.Y" }}
+                        <strong>{% if LANGUAGE_CODE == 'en' %}Joined date{% else %}Дата реєстрації{% endif %}:</strong> {{ user.date_joined|date:"d.m.Y" }}
                     </p>
                 </div>
             </div>
@@ -56,7 +64,7 @@
         <div class="col-md-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Історія замовлень</h5>
+                    <h5 class="mb-0">{% if LANGUAGE_CODE == 'en' %}Order History{% else %}Історія замовлень{% endif %}</h5>
                     <span class="badge bg-primary rounded-pill">{{ user_orders|length }}</span>
                 </div>
                 <div class="card-body">
@@ -66,10 +74,10 @@
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Дата</th>
-                                        <th>Товари</th>
-                                        <th>Сума</th>
-                                        <th>Статус</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Date{% else %}Дата{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Products{% else %}Товари{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Total{% else %}Сума{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Status{% else %}Статус{% endif %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -82,15 +90,23 @@
                                                     <div class="small">{{ item.product.name }} x{{ item.quantity }}</div>
                                                 {% endfor %}
                                                 {% if order.items.count > 2 %}
-                                                    <div class="small text-muted">+ ще {{ order.items.count|add:"-2" }} товар(и)</div>
+                                                    <div class="small text-muted">+ {% if LANGUAGE_CODE == 'en' %}more {{ order.items.count|add:"-2" }} item(s){% else %}ще {{ order.items.count|add:"-2" }} товар(и){% endif %}</div>
                                                 {% endif %}
                                             </td>
                                             <td>{{ order.get_total_after_discount|floatformat:2 }} грн</td>
                                             <td>
-                                                {% if order.paid %}
-                                                    <span class="badge bg-success">Оплачено</span>
+                                                {% if order.status == 'pending' %}
+                                                    <span class="badge bg-warning text-dark">{% if LANGUAGE_CODE == 'en' %}Pending payment{% else %}Очікує оплати{% endif %}</span>
+                                                {% elif order.status == 'paid' %}
+                                                    <span class="badge bg-success">{% if LANGUAGE_CODE == 'en' %}Paid{% else %}Оплачено{% endif %}</span>
+                                                {% elif order.status == 'shipped' %}
+                                                    <span class="badge bg-info text-white">{% if LANGUAGE_CODE == 'en' %}Shipped{% else %}Надіслано{% endif %}</span>
+                                                {% elif order.status == 'delivered' %}
+                                                    <span class="badge bg-primary">{% if LANGUAGE_CODE == 'en' %}Delivered{% else %}Доставлено{% endif %}</span>
+                                                {% elif order.status == 'canceled' %}
+                                                    <span class="badge bg-danger">{% if LANGUAGE_CODE == 'en' %}Canceled{% else %}Скасовано{% endif %}</span>
                                                 {% else %}
-                                                    <span class="badge bg-warning text-dark">Очікує оплату</span>
+                                                    <span class="badge bg-secondary">{{ order.get_status_display }}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -100,7 +116,7 @@
                         </div>
                     {% else %}
                         <div class="text-center py-4">
-                            <p class="text-muted mb-0">Поки що у вас немає замовлень.</p>
+                            <p class="text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}You have no orders yet.{% else %}Поки що у вас немає замовлень.{% endif %}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -108,9 +124,9 @@
 
             <div class="card shadow-sm">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Мої товари</h5>
+                    <h5 class="mb-0">{% if LANGUAGE_CODE == 'en' %}My Products{% else %}Мої товари{% endif %}</h5>
                     <a href="{% url 'products:product_add' %}" class="btn btn-success btn-sm">
-                        + Додати товар
+                        {% if LANGUAGE_CODE == 'en' %}+ Add Product{% else %}+ Додати товар{% endif %}
                     </a>
                 </div>
                 <div class="card-body">
@@ -119,12 +135,12 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Фото</th>
-                                        <th>Назва</th>
-                                        <th>Категорія</th>
-                                        <th>Ціна</th>
-                                        <th>Статус</th>
-                                        <th>Дата</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Photo{% else %}Фото{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Name{% else %}Назва{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Category{% else %}Категорія{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Price{% else %}Ціна{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Status{% else %}Статус{% endif %}</th>
+                                        <th>{% if LANGUAGE_CODE == 'en' %}Date{% else %}Дата{% endif %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,9 +162,9 @@
                                         <td>{{ product.price }} грн</td>
                                         <td>
                                             {% if product.available %}
-                                                <span class="badge bg-success">Активний</span>
+                                                <span class="badge bg-success">{% if LANGUAGE_CODE == 'en' %}Active{% else %}Активний{% endif %}</span>
                                             {% else %}
-                                                <span class="badge bg-secondary">Прихований</span>
+                                                <span class="badge bg-secondary">{% if LANGUAGE_CODE == 'en' %}Hidden{% else %}Прихований{% endif %}</span>
                                             {% endif %}
                                         </td>
                                         <td>{{ product.created|date:"d.m.Y" }}</td>
@@ -160,9 +176,9 @@
                     {% else %}
                         <div class="text-center py-5">
                             <div class="mb-3" style="font-size: 60px;">📦</div>
-                            <p class="text-muted mb-3">Ви ще не додали жодного товару</p>
+                            <p class="text-muted mb-3">{% if LANGUAGE_CODE == 'en' %}You have not added any products yet{% else %}Ви ще не додали жодного товару{% endif %}</p>
                             <a href="{% url 'products:product_add' %}" class="btn btn-primary">
-                                Додати перший товар
+                                {% if LANGUAGE_CODE == 'en' %}Add First Product{% else %}Додати перший товар{% endif %}
                             </a>
                         </div>
                     {% endif %}

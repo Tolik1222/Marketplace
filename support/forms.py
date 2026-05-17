@@ -27,6 +27,16 @@ class SupportTicketCreateForm(forms.ModelForm):
             )
         }
 
+    def __init__(self, *args, **kwargs):
+        from django.utils.translation import get_language
+        lang = get_language()
+        super().__init__(*args, **kwargs)
+        if lang == 'en':
+            self.fields['subject'].label = "Subject"
+            self.fields['subject'].widget.attrs['placeholder'] = "e.g. Issue with order payment"
+            self.fields['message'].label = "Message"
+            self.fields['message'].widget.attrs['placeholder'] = "Describe your issue or request..."
+
 
 class SupportMessageForm(forms.ModelForm):
     class Meta:
@@ -41,3 +51,10 @@ class SupportMessageForm(forms.ModelForm):
                 }
             )
         }
+
+    def __init__(self, *args, **kwargs):
+        from django.utils.translation import get_language
+        lang = get_language()
+        super().__init__(*args, **kwargs)
+        if lang == 'en':
+            self.fields['message'].widget.attrs['placeholder'] = "Write a reply..."

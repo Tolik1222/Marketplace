@@ -1,12 +1,14 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Список бажань{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Wishlist{% else %}Список бажань{% endif %}{% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
-            <h3 class="mb-4"><i class="bi bi-heart me-2"></i>Список бажань</h3>
+            <h3 class="mb-4"><i class="bi bi-heart me-2"></i>{% if LANGUAGE_CODE == 'en' %}Wishlist{% else %}Список бажань{% endif %}</h3>
             {% if items %}
                 <div class="row">
                     {% for item in items %}
@@ -19,8 +21,8 @@
                                     <h5>{{ item.product.name }}</h5>
                                     <p class="text-muted small">{{ item.product.description|truncatewords:12 }}</p>
                                     <p class="fw-semibold mt-auto">{{ item.product.price }} грн</p>
-                                    <a href="{% url 'products:product_detail' item.product.id item.product.slug %}" class="btn btn-light border mb-2">Відкрити</a>
-                                    <a href="{% url 'products:wishlist_toggle' item.product.id %}" class="btn btn-outline-danger">Прибрати</a>
+                                    <a href="{% url 'products:product_detail' item.product.id item.product.slug %}" class="btn btn-light border mb-2">{% if LANGUAGE_CODE == 'en' %}Open{% else %}Відкрити{% endif %}</a>
+                                    <a href="{% url 'products:wishlist_toggle' item.product.id %}" class="btn btn-outline-danger">{% if LANGUAGE_CODE == 'en' %}Remove{% else %}Прибрати{% endif %}</a>
                                 </div>
                             </div>
                         </div>
@@ -28,11 +30,10 @@
                 </div>
             {% else %}
                 <div class="text-center py-5">
-                    <p class="text-muted mb-3">Список бажань порожній.</p>
-                    <a href="{% url 'products:product_list' %}" class="btn btn-primary">До каталогу</a>
+                    <p class="text-muted mb-3">{% if LANGUAGE_CODE == 'en' %}Your wishlist is empty.{% else %}Список бажань порожній.{% endif %}</p>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}To Catalog{% else %}До каталогу{% endif %}</a>
                 </div>
             {% endif %}
         </div>
     </div>
-</div>
-{% endblock %}
+</div>{% endblock %}

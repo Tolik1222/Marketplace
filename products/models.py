@@ -39,6 +39,16 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        from django.core.cache import cache
+        cache.clear()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        from django.core.cache import cache
+        cache.clear()
+        super().delete(*args, **kwargs)
+
     @property
     def has_discount(self):
         return self.discount_percent > 0
@@ -48,6 +58,13 @@ class Product(models.Model):
             return self.price
         multiplier = Decimal("1") - (Decimal(self.discount_percent) / Decimal("100"))
         return (self.price * multiplier).quantize(Decimal("0.01"))
+
+    @property
+    def get_average_rating(self):
+        reviews = self.reviews.all()
+        if not reviews.exists():
+            return 0.0
+        return sum(r.rating for r in reviews) / len(reviews)
 
 
 class WishlistItem(models.Model):

@@ -1,14 +1,16 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Ваш кошик{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Your Cart{% else %}Ваш кошик{% endif %}{% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="mb-0"><i class="bi bi-cart3 me-2"></i>Ваш кошик</h3>
-                <span class="badge text-bg-primary fs-6">{{ cart|length }} товар(ів)</span>
+                <h3 class="mb-0"><i class="bi bi-cart3 me-2"></i>{% if LANGUAGE_CODE == 'en' %}Your Cart{% else %}Ваш кошик{% endif %}</h3>
+                <span class="badge text-bg-primary fs-6">{{ cart|length }} {% if LANGUAGE_CODE == 'en' %}item(s){% else %}товар(ів){% endif %}</span>
             </div>
 
             {% if cart|length %}
@@ -17,7 +19,7 @@
                         <form method="post" action="{% url 'cart:cart_apply_coupon' %}" class="d-flex gap-2">
                             {% csrf_token %}
                             {{ coupon_apply_form.code }}
-                            <button class="btn btn-outline-primary">Застосувати</button>
+                            <button class="btn btn-outline-primary">{% if LANGUAGE_CODE == 'en' %}Apply{% else %}Застосувати{% endif %}</button>
                         </form>
                     </div>
                 </div>
@@ -25,10 +27,10 @@
                     <table class="table align-middle">
                         <thead>
                             <tr>
-                                <th>Товар</th>
-                                <th>Кількість</th>
-                                <th>Ціна</th>
-                                <th>Сума</th>
+                                <th>{% if LANGUAGE_CODE == 'en' %}Product{% else %}Товар{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'en' %}Quantity{% else %}Кількість{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'en' %}Price{% else %}Ціна{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'en' %}Total{% else %}Сума{% endif %}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -49,7 +51,7 @@
                                         <td class="fw-semibold">{{ item.total_price }} грн</td>
                                         <td class="text-end">
                                             <a href="{% url 'cart:cart_remove' product.id %}" class="btn btn-sm btn-outline-danger">
-                                                Видалити
+                                                {% if LANGUAGE_CODE == 'en' %}Remove{% else %}Видалити{% endif %}
                                             </a>
                                         </td>
                                     </tr>
@@ -61,24 +63,24 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <div>
-                        <div>Сума: <strong>{{ cart.get_total_price }} грн</strong></div>
+                        <div>{% if LANGUAGE_CODE == 'en' %}Subtotal:{% else %}Сума:{% endif %} <strong>{{ cart.get_total_price }} грн</strong></div>
                         {% with discount=cart.get_discount %}
                             {% if discount %}
-                                <div class="text-success">Знижка: -{{ discount|floatformat:2 }} грн</div>
+                                <div class="text-success">{% if LANGUAGE_CODE == 'en' %}Discount:{% else %}Знижка:{% endif %} -{{ discount|floatformat:2 }} грн</div>
                             {% endif %}
                         {% endwith %}
-                        <h5 class="mb-0">Разом: <span class="text-primary">{{ cart.get_total_price_after_discount|floatformat:2 }} грн</span></h5>
+                        <h5 class="mb-0">{% if LANGUAGE_CODE == 'en' %}Total:{% else %}Разом:{% endif %} <span class="text-primary">{{ cart.get_total_price_after_discount|floatformat:2 }} грн</span></h5>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{% url 'products:product_list' %}" class="btn btn-light border">Продовжити покупки</a>
-                        <a href="{% url 'orders:order_create' %}" class="btn btn-primary">Оформити замовлення</a>
+                        <a href="{% url 'products:product_list' %}" class="btn btn-light border">{% if LANGUAGE_CODE == 'en' %}Continue Shopping{% else %}Продовжити покупки{% endif %}</a>
+                        <a href="{% url 'orders:order_create' %}" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Checkout{% else %}Оформити замовлення{% endif %}</a>
                     </div>
                 </div>
             {% else %}
                 <div class="text-center py-5">
                     <div class="display-5 mb-3">🛍️</div>
-                    <p class="text-muted mb-3">Кошик поки порожній</p>
-                    <a href="{% url 'products:product_list' %}" class="btn btn-primary">Перейти до товарів</a>
+                    <p class="text-muted mb-3">{% if LANGUAGE_CODE == 'en' %}Your cart is currently empty{% else %}Кошик поки порожній{% endif %}</p>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Go to Shop{% else %}Перейти до товарів{% endif %}</a>
                 </div>
             {% endif %}
         </div>

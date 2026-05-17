@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Тікет #{{ ticket.id }}{% endblock %}
+{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Ticket #{{ ticket.id }}{% else %}Тікет #{{ ticket.id }}{% endif %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -22,34 +23,44 @@
     .msg-staff {
         background: #f4f5f7;
     }
+    [data-theme="dark"] .msg-user {
+        background: var(--brand-soft) !important;
+        color: var(--text-color) !important;
+    }
+    [data-theme="dark"] .msg-staff {
+        background: var(--bg-gradient-end) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="container">
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h3 class="mb-1">#{{ ticket.id }} — {{ ticket.subject }}</h3>
-                    <small class="text-muted">Створено {{ ticket.created_at|date:"d.m.Y H:i" }}</small>
+                    <small class="text-muted">{% if LANGUAGE_CODE == 'en' %}Created{% else %}Створено{% endif %} {{ ticket.created_at|date:"d.m.Y H:i" }}</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     {% if ticket.status == "open" %}
-                        <span class="badge text-bg-warning">Відкрито</span>
+                        <span class="badge text-bg-warning">{% if LANGUAGE_CODE == 'en' %}Open{% else %}Відкрито{% endif %}</span>
                     {% elif ticket.status == "answered" %}
-                        <span class="badge text-bg-success">Є відповідь</span>
+                        <span class="badge text-bg-success">{% if LANGUAGE_CODE == 'en' %}Answered{% else %}Є відповідь{% endif %}</span>
                     {% else %}
-                        <span class="badge text-bg-secondary">Закрито</span>
+                        <span class="badge text-bg-secondary">{% if LANGUAGE_CODE == 'en' %}Closed{% else %}Закрито{% endif %}</span>
                     {% endif %}
 
                     {% if user.is_staff %}
                         <form method="post" action="{% url 'support:ticket_update_status' ticket.id %}">
                             {% csrf_token %}
                             <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="open" {% if ticket.status == "open" %}selected{% endif %}>Відкрито</option>
-                                <option value="answered" {% if ticket.status == "answered" %}selected{% endif %}>Є відповідь</option>
-                                <option value="closed" {% if ticket.status == "closed" %}selected{% endif %}>Закрито</option>
+                                <option value="open" {% if ticket.status == "open" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Open{% else %}Відкрито{% endif %}</option>
+                                <option value="answered" {% if ticket.status == "answered" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Answered{% else %}Є відповідь{% endif %}</option>
+                                <option value="closed" {% if ticket.status == "closed" %}selected{% endif %}>{% if LANGUAGE_CODE == 'en' %}Closed{% else %}Закрито{% endif %}</option>
                             </select>
                         </form>
                     {% endif %}
@@ -61,31 +72,31 @@
                     {% for msg in ticket.messages.all %}
                         <div class="msg {% if msg.is_staff_reply %}msg-staff{% else %}msg-user{% endif %}">
                             <div class="small fw-semibold mb-1">
-                                {% if msg.is_staff_reply %}Підтримка{% else %}{{ msg.author.username }}{% endif %}
+                                {% if msg.is_staff_reply %}{% if LANGUAGE_CODE == 'en' %}Support{% else %}Підтримка{% endif %}{% else %}{{ msg.author.username }}{% endif %}
                             </div>
                             <div>{{ msg.message|linebreaksbr }}</div>
                             <div class="small text-muted mt-2">{{ msg.created_at|date:"d.m.Y H:i" }}</div>
                         </div>
                     {% empty %}
-                        <p class="text-muted">Повідомлень поки немає.</p>
+                        <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}No messages yet.{% else %}Повідомлень поки немає.{% endif %}</p>
                     {% endfor %}
                 </div>
             </div>
 
             <form method="post">
                 {% csrf_token %}
-                <label class="form-label">Нове повідомлення</label>
+                <label class="form-label">{% if LANGUAGE_CODE == 'en' %}New Message{% else %}Нове повідомлення{% endif %}</label>
                 {{ form.message }}
                 {% if user.is_staff %}
                     <div class="d-flex flex-wrap gap-2 mt-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Дякуємо за звернення! Ми вже перевіряємо деталі вашого запиту.">Швидка: В роботі</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Ваше питання вирішено. Якщо потрібна додаткова допомога — напишіть нам.">Швидка: Вирішено</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="Будь ласка, уточніть номер замовлення та зручний спосіб зв’язку.">Швидка: Уточнення</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="{% if LANGUAGE_CODE == 'en' %}Thank you for contacting us! We are checking the details of your request.{% else %}Дякуємо за звернення! Ми вже перевіряємо деталі вашого запиту.{% endif %}">{% if LANGUAGE_CODE == 'en' %}Quick: In progress{% else %}Швидка: В роботі{% endif %}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="{% if LANGUAGE_CODE == 'en' %}Your issue has been resolved. If you need further assistance, please let us know.{% else %}Ваше питання вирішено. Якщо потрібна додаткова допомога — напишіть нам.{% endif %}">{% if LANGUAGE_CODE == 'en' %}Quick: Resolved{% else %}Швидка: Вирішено{% endif %}</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-quick-reply" data-text="{% if LANGUAGE_CODE == 'en' %}Please specify your order number and convenient contact method.{% else %}Будь ласка, уточніть номер замовлення та зручний спосіб зв’язку.{% endif %}">{% if LANGUAGE_CODE == 'en' %}Quick: Clarification{% else %}Швидка: Уточнення{% endif %}</button>
                     </div>
                 {% endif %}
                 <div class="d-flex gap-2 mt-3">
-                    <button type="submit" class="btn btn-primary">Надіслати</button>
-                    <a href="{% url 'support:ticket_list' %}" class="btn btn-light border">До списку</a>
+                    <button type="submit" class="btn btn-primary">{% if LANGUAGE_CODE == 'en' %}Send{% else %}Надіслати{% endif %}</button>
+                    <a href="{% url 'support:ticket_list' %}" class="btn btn-light border">{% if LANGUAGE_CODE == 'en' %}To List{% else %}До списку{% endif %}</a>
                 </div>
             </form>
         </div>
@@ -116,7 +127,7 @@
     function renderMessages(messages) {
         if (!chatMessages) return;
         if (!messages.length) {
-            chatMessages.innerHTML = '<p class="text-muted">Повідомлень поки немає.</p>';
+            chatMessages.innerHTML = '<p class="text-muted">{% if LANGUAGE_CODE == "en" %}No messages yet.{% else %}Повідомлень поки немає.{% endif %}</p>';
             return;
         }
 
