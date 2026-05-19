@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'en' %}Shipping and Payment{% else
-%}Доставка і оплата{% endif %}{% endblock %}
+{% block title %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'en' %}
+Shipping and Payment
+{% else %}
+Доставка і оплата
+{% endif %}
+{% endblock %}
 
 {% block content %}
 {% get_current_language as LANGUAGE_CODE %}
@@ -11,69 +17,154 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 p-lg-5">
-                    <h2 class="mb-3"><i class="bi bi-truck me-2"></i>{% if LANGUAGE_CODE == 'en' %}Shipping and
-                        Payment{% else %}Доставка і оплата{% endif %}</h2>
+                    <h2 class="mb-3">
+                        <i class="bi bi-truck me-2"></i>
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Shipping and Payment
+                        {% else %}
+                        Доставка і оплата
+                        {% endif %}
+                    </h2>
                     <p class="text-muted mb-4">
-                        {% if LANGUAGE_CODE == 'en' %}We deliver orders across Ukraine quickly and conveniently.{% else
-                        %}Ми доставляємо замовлення по всій Україні швидко та зручно.{% endif %}
+                        {% if LANGUAGE_CODE == 'en' %}
+                        We deliver orders across Ukraine quickly and conveniently.
+                        {% else %}
+                        Ми доставляємо замовлення по всій Україні швидко та зручно.
+                        {% endif %}
                     </p>
 
-                    <h5 class="mt-4">{% if LANGUAGE_CODE == 'en' %}Shipping Options{% else %}Варіанти доставки{% endif
-                        %}</h5>
+                    <h5 class="mt-4">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Shipping Options
+                        {% else %}
+                        Варіанти доставки
+                        {% endif%}
+                    </h5>
                     <div class="row g-3 mt-1">
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 h-100">
-                                <strong>{% if LANGUAGE_CODE == 'en' %}Nova Poshta{% else %}Нова Пошта{% endif
-                                    %}</strong>
-                                <div class="small text-muted mt-2">{% if LANGUAGE_CODE == 'en' %}Branches and parcel
-                                    lockers across Ukraine.{% else %}Відділення та поштомати по Україні.{% endif %}
+                                <strong>
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Nova Poshta
+                                    {% else %}
+                                    Нова Пошта
+                                    {% endif%}
+                                </strong>
+                                <div class="small text-muted mt-2">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Branches and parcel lockers across Ukraine.
+                                    {% else %}
+                                    Відділення та поштомати по Україні.
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 h-100">
-                                <strong>{% if LANGUAGE_CODE == 'en' %}Ukrposhta{% else %}Укрпошта{% endif %}</strong>
-                                <div class="small text-muted mt-2">{% if LANGUAGE_CODE == 'en' %}Available for cities
-                                    and villages.{% else %}Доступно для міст та сіл.{% endif %}</div>
+                                <strong>
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Ukrposhta
+                                    {% else %}
+                                    Укрпошта
+                                    {% endif %}
+                                </strong>
+                                <div class="small text-muted mt-2">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Available for cities and villages.
+                                    {% else %}
+                                    Доступно для міст та сіл.
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 h-100">
-                                <strong>{% if LANGUAGE_CODE == 'en' %}Meest{% else %}Meest{% endif %}</strong>
-                                <div class="small text-muted mt-2">{% if LANGUAGE_CODE == 'en' %}Convenient delivery to
-                                    pickup points.{% else %}Зручна доставка у пункти видачі.{% endif %}</div>
+                                <strong>
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Meest
+                                    {% else %}
+                                    Meest
+                                    {% endif %}
+                                </strong>
+                                <div class="small text-muted mt-2">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    Convenient delivery to pickup points.
+                                    {% else %}
+                                    Зручна доставка у пункти видачі.
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <h5 class="mt-4">{% if LANGUAGE_CODE == 'en' %}Delivery Times{% else %}Терміни{% endif %}</h5>
+                    <h5 class="mt-4">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Delivery Times
+                        {% else %}
+                        Терміни
+                        {% endif %}
+                    </h5>
                     <ul class="mb-0">
-                        <li>{% if LANGUAGE_CODE == 'en' %}Average delivery time: <strong>up to 4 business
-                                days</strong>.{% else %}Середній термін доставки: <strong>до 4 робочих днів</strong>.{%
-                            endif %}</li>
-                        <li>{% if LANGUAGE_CODE == 'en' %}Usually 1-2 days to major cities, 3-4 days to remote
-                            regions.{% else %}У великі міста зазвичай 1-2 дні, у віддалені регіони — 3-4 дні.{% endif %}
+                        <li>
+                            {% if LANGUAGE_CODE == 'en' %}
+                            Average delivery time: <strong>up to 4 business days</strong>.
+                            {% else %}
+                            Середній термін доставки: <strong>до 4 робочих днів</strong>.
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if LANGUAGE_CODE == 'en' %}
+                            Usually 1-2 days to major cities, 3-4 days to remote regions.
+                            {% else %}
+                            У великі міста зазвичай 1-2 дні, у віддалені регіони — 3-4 дні.
+                            {% endif %}
                         </li>
                     </ul>
 
-                    <h5 class="mt-4">{% if LANGUAGE_CODE == 'en' %}Payment{% else %}Оплата{% endif %}</h5>
+                    <h5 class="mt-4">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Payment
+                        {% else %}
+                        Оплата
+                        {% endif %}
+                    </h5>
                     <ul class="mb-0">
-                        <li>{% if LANGUAGE_CODE == 'en' %}Online payment by card.{% else %}Онлайн-оплата карткою.{%
-                            endif %}</li>
-                        <li>{% if LANGUAGE_CODE == 'en' %}For orders over <strong>10000 UAH</strong> —
-                            <strong>10%</strong> deposit is required.{% else %}Для замовлень дорожче <strong>10000
-                                грн</strong> — передоплата <strong>10%</strong>.{% endif %}</li>
-                        <li>{% if LANGUAGE_CODE == 'en' %}The rest of the amount — upon receipt or full online
-                            payment.{% else %}Решта суми — при отриманні або повна оплата онлайн.{% endif %}</li>
+                        <li>
+                            {% if LANGUAGE_CODE == 'en' %}
+                            Online payment by card.
+                            {% else %}
+                            Онлайн-оплата карткою.
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if LANGUAGE_CODE == 'en' %}
+                            For orders over <strong>10000 UAH</strong> —
+                            <strong>10%</strong> deposit is required.
+                            {% else %}
+                            Для замовлень дорожче <strong>10000 грн</strong> —
+                            передоплата <strong>10%</strong>.
+                            {% endif %}
+                        </li>
+                        <li>
+                            {% if LANGUAGE_CODE == 'en' %}
+                            The rest of the amount — upon receipt or full online payment.
+                            {% else %}
+                            Решта суми — при отриманні або повна оплата онлайн.
+                            {% endif %}
+                        </li>
                     </ul>
 
                     <h5 class="mt-4">{% if LANGUAGE_CODE == 'en' %}Returns{% else %}Повернення{% endif %}</h5>
                     <p class="mb-0">
-                        {% if LANGUAGE_CODE == 'en' %}Returns are possible within 14 days provided that the product
-                        layout and full package are preserved. If the product has a defect or does not match the
-                        description, we cover return shipping costs.{% else %}Повернення можливе протягом 14 днів за
-                        умови збереження товарного вигляду та повної комплектації. Якщо товар має дефект або не
-                        відповідає опису, ми покриваємо витрати на зворотну доставку.{% endif %}
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Returns are possible within 14 days provided that the product layout and full package are
+                        preserved. If the product has a defect or does not match the description, we cover return
+                        shipping costs.
+                        {% else %}
+                        Повернення можливе протягом 14 днів за умови збереження товарного вигляду та повної
+                        комплектації. Якщо товар має дефект або не відповідає опису, ми покриваємо витрати на зворотну
+                        доставку.
+                        {% endif %}
                     </p>
                 </div>
             </div>
@@ -82,16 +173,37 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
-                    <h5>{% if LANGUAGE_CODE == 'en' %}Need Help?{% else %}Потрібна допомога?{% endif %}</h5>
-                    <p class="text-muted">{% if LANGUAGE_CODE == 'en' %}Write to us in support chat — we respond as fast
-                        as possible.{% else %}Напишіть нам у чат підтримки — відповідаємо максимально швидко.{% endif %}
+                    <h5>
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Need Help?
+                        {% else %}
+                        Потрібна допомога?
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Write to us in support chat — we respond as fast
+                        as possible.
+                        {% else %}
+                        Напишіть нам у чат підтримки — відповідаємо максимально швидко.
+                        {% endif %}
                     </p>
                     {% if user.is_authenticated %}
-                    <a href="{% url 'support:ticket_list' %}" class="btn btn-primary w-100">{% if LANGUAGE_CODE == 'en'
-                        %}Go to Support{% else %}Перейти в підтримку{% endif %}</a>
+                    <a href="{% url 'support:ticket_list' %}" class="btn btn-primary w-100">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Go to Support
+                        {% else %}
+                        Перейти в підтримку
+                        {% endif %}
+                    </a>
                     {% else %}
-                    <a href="{% url 'accounts:login' %}" class="btn btn-primary w-100">{% if LANGUAGE_CODE == 'en' %}Log
-                        in to Contact{% else %}Увійти для звернення{% endif %}</a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-primary w-100">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Log in to Contact
+                        {% else %}
+                        Увійти для звернення
+                        {% endif %}
+                    </a>
                     {% endif %}
                 </div>
             </div>
