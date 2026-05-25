@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Налаштування профілю продавця — Super Store{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 700px;">
+
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:seller_dashboard' %}">Кабінет Продавця</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Налаштування</li>
+        </ol>
+    </nav>
+
+    <h1 class="h3 fw-bold mb-4">
+        <i class="bi bi-gear-fill me-2 text-primary"></i>Налаштування профілю продавця
+    </h1>
+
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <!-- Stripe Connect -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                <h2 class="h6 fw-bold mb-0">
+                    <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="#635BFF" xmlns="http://www.w3.org/2000/svg"><path d="M13.479 9.883c-1.626-.604-2.512-1.067-2.512-1.803 0-.609.54-.955 1.467-.955 1.754 0 3.533.668 4.77 1.316l.7-4.265C16.65 3.382 14.893 3 13.15 3 9.145 3 6.5 5.149 6.5 8.37c0 2.782 1.98 4.115 4.81 5.044 1.786.617 2.411 1.054 2.411 1.803 0 .71-.616 1.109-1.735 1.109-1.583 0-3.796-.668-5.256-1.585L6 19.017C7.62 20.05 9.891 21 12.5 21c4.141 0 6.7-2.025 6.7-5.38 0-2.907-1.862-4.241-5.721-5.737z"/></svg>
+                    Stripe Connect
+                </h2>
+                <p class="text-muted small mb-0 mt-1">Вкажіть ваш Stripe Connect Account ID для отримання виплат від маркетплейсу.</p>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="mb-3">
+                    <label for="id_stripe_account_id" class="form-label fw-semibold">
+                        Stripe Account ID
+                        <span class="text-muted fw-normal">(необов'язково)</span>
+                    </label>
+                    {{ form.stripe_account_id }}
+                    <div class="form-text">Формат: <code>acct_1234AbCdEfGhIjKl</code>. Знайдіть у вашому Stripe Dashboard.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nova Poshta -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                <h2 class="h6 fw-bold mb-0">
+                    <i class="bi bi-truck me-2 text-warning"></i>Нова Пошта — Реквізити відправника
+                </h2>
+                <p class="text-muted small mb-0 mt-1">Ці дані використовуються для автоматичного створення ТТН. Знайдіть Ref-значення через API або особистий кабінет НП.</p>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="mb-3">
+                    <label for="id_np_sender_ref" class="form-label fw-semibold">
+                        Ref відправника
+                        <span class="text-muted fw-normal">(CounterpartyRef)</span>
+                    </label>
+                    {{ form.np_sender_ref }}
+                    <div class="form-text">UUID з API НП для методу <code>Counterparty.getCounterparties</code>.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="id_np_sender_address_ref" class="form-label fw-semibold">
+                        Ref адреси відправника
+                        <span class="text-muted fw-normal">(AddressRef)</span>
+                    </label>
+                    {{ form.np_sender_address_ref }}
+                    <div class="form-text">UUID відділення відправлення з API НП.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="id_np_sender_contact_ref" class="form-label fw-semibold">
+                        Ref контакту відправника
+                        <span class="text-muted fw-normal">(ContactPersonRef)</span>
+                    </label>
+                    {{ form.np_sender_contact_ref }}
+                    <div class="form-text">UUID контактної особи з API НП.</div>
+                </div>
+                <div class="mb-0">
+                    <label for="id_np_sender_phone" class="form-label fw-semibold">Телефон відправника</label>
+                    {{ form.np_sender_phone }}
+                    <div class="form-text">У форматі <code>+380XXXXXXXXX</code>.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 rounded-pill">
+                <i class="bi bi-check2-circle me-2"></i>Зберегти
+            </button>
+            <a href="{% url 'accounts:seller_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-x-circle me-2"></i>Скасувати
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

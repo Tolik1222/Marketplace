@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django import forms
 from .forms import UserRegistrationForm, UserLoginForm, UserProfileForm
 from products.models import Product
 from orders.models import Order
@@ -110,7 +111,10 @@ def seller_dashboard(request):
     products = Product.objects.filter(owner=request.user).order_by("-updated")
     total_products = products.count()
 
-    order_items = OrderItem.objects.filter(product__owner=request.user).select_related('order', 'product')
+    # Optimize N+1 queries by prefetching related order items and selecting coupons
+    order_items = OrderItem.objects.filter(
+        product__owner=request.user
+    ).select_related('order', 'order__coupon', 'product').prefetch_related('order__items')
     
     total_sold = 0
     total_revenue = Decimal("0.00")
@@ -154,12 +158,18 @@ def seller_dashboard(request):
     seller_orders = list(orders_dict.values())
     seller_orders.sort(key=lambda x: x['order'].created, reverse=True)
 
+    from orders.models import SubOrder
+    seller_sub_orders = SubOrder.objects.filter(
+        vendor=request.user
+    ).select_related('order', 'order__coupon').prefetch_related('items__product').order_by('-created')
+
     context = {
         'products': products,
         'total_products': total_products,
         'total_sold': total_sold,
         'total_revenue': total_revenue,
         'seller_orders': seller_orders,
+        'seller_sub_orders': seller_sub_orders,
     }
     return render(request, 'accounts/seller_dashboard.html', context)
 
@@ -224,8 +234,10 @@ def seller_export_excel(request):
         cell.border = thin_border
     ws.row_dimensions[1].height = 28
 
-    # вибираємо продані товари цього продавця
-    order_items = OrderItem.objects.filter(product__owner=request.user).select_related('order', 'product').order_by('-order__created')
+    # вибираємо продані товари цього продавця (з оптимізацією N+1)
+    order_items = OrderItem.objects.filter(
+        product__owner=request.user
+    ).select_related('order', 'order__coupon', 'product').prefetch_related('order__items').order_by('-order__created')
     
     current_row = 2
     for item in order_items:
@@ -316,3 +328,148 @@ def seller_export_excel(request):
     response['Content-Disposition'] = f'attachment; filename="sales_report_{now().strftime("%Y-%m-%d")}.xlsx"'
     wb.save(response)
     return response
+
+
+import json
+import uuid
+import logging
+import requests as http_requests
+from django.core.exceptions import PermissionDenied
+from django.conf import settings
+from orders.models import SubOrder
+
+logger_v = logging.getLogger(__name__)
+
+
+@login_required
+def seller_suborder_detail(request, sub_order_id):
+    """Деталі підзамовлення для продавця + зміна статусу."""
+    if not request.user.is_staff:
+        raise PermissionDenied("Ви повинні бути продавцем.")
+
+    sub_order = get_object_or_404(SubOrder, id=sub_order_id, vendor=request.user)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        allowed = ['paid', 'shipped', 'delivered', 'canceled']
+        if new_status in allowed:
+            sub_order.status = new_status
+            sub_order.save()
+            messages.success(request, f"Статус підзамовлення #{sub_order.id} оновлено на '{new_status}'.")
+        return redirect('accounts:seller_suborder_detail', sub_order_id=sub_order.id)
+
+    return render(request, 'accounts/suborder_detail.html', {'sub_order': sub_order})
+
+
+@login_required
+def generate_novaposhta_waybill(request, sub_order_id):
+    """Автогенерація ТТН Нової Пошти для підзамовлення."""
+    if not request.user.is_staff:
+        raise PermissionDenied("Ви повинні бути продавцем.")
+
+    sub_order = get_object_or_404(SubOrder, id=sub_order_id, vendor=request.user)
+    profile = getattr(request.user, 'seller_profile', None)
+
+    NP_API_KEY = getattr(settings, 'NOVA_POSHTA_API_KEY', None)
+    generated_ttn = None
+    error_msg = None
+
+    if NP_API_KEY and profile and profile.np_sender_ref:
+        order = sub_order.order
+        payload = {
+            "apiKey": NP_API_KEY,
+            "modelName": "InternetDocument",
+            "calledMethod": "save",
+            "methodProperties": {
+                "PayerType": "Sender",
+                "PaymentMethod": "Cash",
+                "DateTime": order.created.strftime("%d.%m.%Y"),
+                "CargoType": "Cargo",
+                "Weight": "1",
+                "ServiceType": "WarehouseWarehouse",
+                "SeatsAmount": "1",
+                "Description": f"Замовлення #{order.id}",
+                "Cost": str(int(sub_order.get_total_after_discount())),
+                "CitySender": profile.np_sender_ref,
+                "Sender": profile.np_sender_ref,
+                "SenderAddress": profile.np_sender_address_ref or "",
+                "ContactSender": profile.np_sender_contact_ref or "",
+                "SendersPhone": profile.np_sender_phone or "",
+                "CityRecipient": order.city,
+                "RecipientAddress": order.branch,
+                "RecipientsPhone": "",
+                "RecipientName": f"{order.first_name} {order.last_name}",
+            }
+        }
+        try:
+            resp = http_requests.post("https://api.novaposhta.ua/v2.0/json/", json=payload, timeout=10)
+            data = resp.json()
+            if data.get("success") and data.get("data"):
+                generated_ttn = data["data"][0].get("IntDocNumber", "")
+                waybill_ref = data["data"][0].get("Ref", "")
+                sub_order.tracking_number = generated_ttn
+                sub_order.waybill_ref = waybill_ref
+                sub_order.save()
+                messages.success(request, f"ТТН успішно згенеровано: {generated_ttn}")
+            else:
+                errors = data.get("errors", [])
+                error_msg = "; ".join(errors) if errors else "Невідома помилка API."
+                logger_v.warning("Nova Poshta waybill generation failed for SubOrder %s: %s", sub_order_id, error_msg)
+        except Exception as exc:
+            error_msg = str(exc)
+            logger_v.exception("Nova Poshta API error for SubOrder %s", sub_order_id)
+    else:
+        # Fallback: generate a test tracking number
+        generated_ttn = f"59{str(uuid.uuid4().int)[:12]}"
+        sub_order.tracking_number = generated_ttn
+        sub_order.waybill_ref = "test"
+        sub_order.save()
+        messages.warning(request, f"API Нової Пошти не налаштовано. Тестовий трек-номер: {generated_ttn}")
+
+    if error_msg:
+        messages.error(request, f"Помилка генерації ТТН: {error_msg}")
+
+    return redirect('accounts:seller_suborder_detail', sub_order_id=sub_order.id)
+
+
+from .models import SellerProfile
+
+class SellerProfileForm(forms.ModelForm):
+    class Meta:
+        model = SellerProfile
+        fields = ['stripe_account_id', 'np_sender_ref', 'np_sender_address_ref',
+                  'np_sender_contact_ref', 'np_sender_phone']
+        labels = {
+            'stripe_account_id': 'Stripe Connect Account ID',
+            'np_sender_ref': 'Нова Пошта: Ref відправника',
+            'np_sender_address_ref': 'Нова Пошта: Ref адреси відправника',
+            'np_sender_contact_ref': 'Нова Пошта: Ref контакту відправника',
+            'np_sender_phone': 'Нова Пошта: Телефон відправника',
+        }
+        widgets = {
+            'stripe_account_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'acct_...'}),
+            'np_sender_ref': forms.TextInput(attrs={'class': 'form-control'}),
+            'np_sender_address_ref': forms.TextInput(attrs={'class': 'form-control'}),
+            'np_sender_contact_ref': forms.TextInput(attrs={'class': 'form-control'}),
+            'np_sender_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+380...'}),
+        }
+
+
+@login_required
+def seller_profile_edit(request):
+    """Редагування налаштувань профілю продавця: Stripe Connect та Нова Пошта."""
+    if not request.user.is_staff:
+        raise PermissionDenied("Ви повинні бути продавцем.")
+
+    profile, _ = SellerProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = SellerProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Профіль продавця успішно оновлено.")
+            return redirect('accounts:seller_dashboard')
+    else:
+        form = SellerProfileForm(instance=profile)
+
+    return render(request, 'accounts/seller_profile_edit.html', {'form': form})

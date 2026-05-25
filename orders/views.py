@@ -7,9 +7,10 @@ from .models import OrderItem
 from .forms import OrderCreateForm
 from cart.cart import Cart
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.cache import cache
 import requests
 import re
+from .tasks import send_order_notifications_task
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +34,31 @@ def order_create(request):
                     order.coupon = coupon
                     order.discount = coupon.discount
                 order.save()
+                from collections import defaultdict
+                from .models import SubOrder
+                items_by_vendor = defaultdict(list)
                 for item in cart:
-                    OrderItem.objects.create(
+                    vendor = item['product'].owner
+                    items_by_vendor[vendor].append(item)
+                
+                for vendor, vendor_items in items_by_vendor.items():
+                    sub_order = SubOrder.objects.create(
                         order=order,
-                        product=item['product'],
-                        price=item['price'],
-                        quantity=item['quantity'],
+                        vendor=vendor,
+                        status='pending'
                     )
+                    for item in vendor_items:
+                        OrderItem.objects.create(
+                            order=order,
+                            sub_order=sub_order,
+                            product=item['product'],
+                            price=item['price'],
+                            quantity=item['quantity'],
+                        )
             
             request.session['order_id'] = order.id
-            _send_order_notifications(order)
+            # Send notifications asynchronously using Celery
+            send_order_notifications_task.delay(order.id)
             cart.clear()
             
             if order.payment_method == 'cod':
@@ -52,54 +68,6 @@ def order_create(request):
     else:
         form = OrderCreateForm(has_expensive_item=has_expensive_item)
     return render(request, 'orders/order/create.html', {'cart': cart, 'form': form})
-
-
-def _send_order_notifications(order):
-    total = order.get_total_after_discount()
-    customer_message = (
-        f"Дякуємо за замовлення #{order.id}!\n"
-        f"Сума: {total} грн.\n"
-        "Ми обробляємо ваше замовлення."
-    )
-    if order.email:
-        try:
-            send_mail(
-                subject=f"Підтвердження замовлення #{order.id}",
-                message=customer_message,
-                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-                recipient_list=[order.email],
-                fail_silently=True,
-            )
-        except Exception:
-            logger.exception("Failed to send order confirmation email for order %s", order.id)
-
-    admin_email = getattr(settings, "ORDER_ADMIN_EMAIL", None) or getattr(settings, "DEFAULT_FROM_EMAIL", None)
-    if admin_email:
-        try:
-            send_mail(
-                subject=f"Нове замовлення #{order.id}",
-                message=f"Нове замовлення на суму {total} грн від {order.first_name} {order.last_name}.",
-                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-                recipient_list=[admin_email],
-                fail_silently=True,
-            )
-        except Exception:
-            logger.exception("Failed to send admin order notification for order %s", order.id)
-
-    bot_token = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
-    chat_id = getattr(settings, "TELEGRAM_CHAT_ID", None)
-    if bot_token and chat_id:
-        try:
-            requests.post(
-                f"https://api.telegram.org/bot{bot_token}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": f"Нове замовлення #{order.id}\nСума: {total} грн\nКлієнт: {order.first_name} {order.last_name}",
-                },
-                timeout=5,
-            )
-        except requests.RequestException:
-            logger.warning("Failed to send telegram notification for order %s", order.id)
 
 
 from django.http import JsonResponse
@@ -166,6 +134,11 @@ def ajax_novaposhta_cities(request):
     if re.search(r'[a-zA-Z]', q):
         q = transliterate_latin_to_cyrillic(q)
     
+    cache_key = f"novaposhta_cities_{q.lower()}"
+    cached_cities = cache.get(cache_key)
+    if cached_cities is not None:
+        return JsonResponse(cached_cities, safe=False)
+    
     fallback_cities = [
         {'name': 'Київ', 'ref': 'db5c88f5-391c-11dd-90d9-001a4d12cfd8'},
         {'name': 'Харків', 'ref': 'db5c88f0-391c-11dd-90d9-001a4d12cfd8'},
@@ -197,6 +170,7 @@ def ajax_novaposhta_cities(request):
                         'ref': item.get('Ref', '')
                     })
                 if cities:
+                    cache.set(cache_key, cities, 86400)  # cache for 24 hours
                     return JsonResponse(cities, safe=False)
     except Exception as e:
         logger.error(f"Nova Poshta Cities API error: {e}")
@@ -209,6 +183,11 @@ def ajax_novaposhta_branches(request):
     city_ref = request.GET.get('city_ref', '').strip()
     if not city_ref:
         return JsonResponse([], safe=False)
+        
+    cache_key = f"novaposhta_branches_{city_ref}"
+    cached_branches = cache.get(cache_key)
+    if cached_branches is not None:
+        return JsonResponse(cached_branches, safe=False)
         
     try:
         payload = {
@@ -231,6 +210,7 @@ def ajax_novaposhta_branches(request):
                         'ref': item.get('Ref', '')
                     })
                 if branches:
+                    cache.set(cache_key, branches, 86400)  # cache for 24 hours
                     return JsonResponse(branches, safe=False)
     except Exception as e:
         logger.error(f"Nova Poshta Branches API error: {e}")

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Підзамовлення #{{ sub_order.id }} — Кабінет Продавця{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container my-4">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'accounts:seller_dashboard' %}">Кабінет Продавця</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Підзамовлення #{{ sub_order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+
+        <!-- LEFT: Sub-order Info -->
+        <div class="col-lg-8">
+
+            <!-- Items Table -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                    <h2 class="h5 fw-bold mb-0">
+                        <i class="bi bi-bag-check me-2 text-primary"></i>
+                        Підзамовлення #{{ sub_order.id }} — Замовлення #{{ sub_order.order.id }}
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4 py-3">Товар</th>
+                                    <th class="py-3">Ціна</th>
+                                    <th class="py-3">Кількість</th>
+                                    <th class="py-3 text-end pe-4">Сума</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in sub_order.items.all %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="{{ item.product.get_absolute_url }}" class="fw-semibold text-decoration-none">{{ item.product.name }}</a>
+                                    </td>
+                                    <td>{{ item.price }} грн</td>
+                                    <td>{{ item.quantity }} шт.</td>
+                                    <td class="text-end pe-4 fw-semibold">{{ item.get_cost }} грн</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold ps-4 py-3">Всього (без знижки):</td>
+                                    <td class="text-end pe-4 fw-bold">{{ sub_order.get_total_cost }} грн</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-semibold ps-4">Знижка:</td>
+                                    <td class="text-end pe-4 text-danger fw-semibold">−{{ sub_order.get_discount_amount }} грн</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold ps-4 py-3 text-primary">Сума до виплати (−10% комісія):</td>
+                                    <td class="text-end pe-4 fw-bold text-primary fs-5">
+                                        {% with total=sub_order.get_total_after_discount %}
+                                        {{ total|floatformat:2 }} грн
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buyer & Delivery Info -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                    <h3 class="h6 fw-bold mb-0"><i class="bi bi-person-lines-fill me-2 text-success"></i>Дані покупця та доставки</h3>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1">Покупець</label>
+                            <span class="fw-semibold">{{ sub_order.order.first_name }} {{ sub_order.order.last_name }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1">Email</label>
+                            <span>{{ sub_order.order.email }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1">Служба доставки</label>
+                            <span>{{ sub_order.order.get_delivery_service_display }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1">Місто</label>
+                            <span>{{ sub_order.order.city|default:"—" }}</span>
+                        </div>
+                        <div class="col-12">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1">Відділення / Адреса</label>
+                            <span>{{ sub_order.order.branch|default:sub_order.order.address|default:"—" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: Status & TTN -->
+        <div class="col-lg-4">
+
+            <!-- Status Card -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                    <h3 class="h6 fw-bold mb-0"><i class="bi bi-activity me-2 text-warning"></i>Статус підзамовлення</h3>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="mb-3">
+                        {% if sub_order.status == 'pending' %}
+                            <span class="badge bg-warning text-dark fs-6 px-3 py-2">Очікує оплати</span>
+                        {% elif sub_order.status == 'paid' %}
+                            <span class="badge bg-success fs-6 px-3 py-2">Оплачено</span>
+                        {% elif sub_order.status == 'shipped' %}
+                            <span class="badge bg-info text-white fs-6 px-3 py-2">Надіслано</span>
+                        {% elif sub_order.status == 'delivered' %}
+                            <span class="badge bg-primary fs-6 px-3 py-2">Доставлено</span>
+                        {% elif sub_order.status == 'canceled' %}
+                            <span class="badge bg-danger fs-6 px-3 py-2">Скасовано</span>
+                        {% endif %}
+                    </div>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="status-select" class="form-label fw-semibold">Змінити статус:</label>
+                            <select id="status-select" name="status" class="form-select">
+                                <option value="paid" {% if sub_order.status == 'paid' %}selected{% endif %}>Оплачено</option>
+                                <option value="shipped" {% if sub_order.status == 'shipped' %}selected{% endif %}>Надіслано</option>
+                                <option value="delivered" {% if sub_order.status == 'delivered' %}selected{% endif %}>Доставлено</option>
+                                <option value="canceled" {% if sub_order.status == 'canceled' %}selected{% endif %}>Скасовано</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                            <i class="bi bi-check2-circle me-2"></i>Зберегти статус
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TTN Card -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                    <h3 class="h6 fw-bold mb-0"><i class="bi bi-truck me-2 text-info"></i>Нова Пошта — ТТН</h3>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    {% if sub_order.tracking_number %}
+                        <div class="alert alert-success rounded-3 mb-3">
+                            <div class="small text-muted mb-1">Трек-номер ТТН:</div>
+                            <div class="fw-bold fs-5 font-monospace">{{ sub_order.tracking_number }}</div>
+                            {% if sub_order.waybill_ref and sub_order.waybill_ref != 'test' %}
+                            <div class="small text-muted mt-1">Ref: {{ sub_order.waybill_ref }}</div>
+                            {% elif sub_order.waybill_ref == 'test' %}
+                            <div class="small text-warning mt-1"><i class="bi bi-exclamation-triangle me-1"></i>Тестовий трек-номер</div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-3">ТТН ще не згенеровано. Після оплати замовлення ви можете згенерувати ТТН автоматично.</p>
+                    {% endif %}
+                    <a href="{% url 'accounts:generate_novaposhta_waybill' sub_order.id %}"
+                       class="btn btn-outline-info w-100 rounded-pill"
+                       onclick="return confirm('Згенерувати нову ТТН для цього підзамовлення?');">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        {% if sub_order.tracking_number %}Перегенерувати ТТН{% else %}Згенерувати ТТН{% endif %}
+                    </a>
+                    <div class="mt-3">
+                        <a href="{% url 'accounts:seller_profile_edit' %}" class="btn btn-link btn-sm text-muted p-0">
+                            <i class="bi bi-gear me-1"></i>Налаштування відправника НП
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

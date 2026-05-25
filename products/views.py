@@ -31,8 +31,20 @@ def product_list(request, category_slug=None):
         products_query = Product.objects.filter(available=True)
         if category:
             products_query = products_query.filter(category=category)
+        
+        meili_used = False
+        meili_ids = None
         if query:
-            products_query = products_query.filter(Q(name__icontains=query) | Q(description__icontains=query))
+            from .search import search_products_meili
+            meili_ids = search_products_meili(query, category_id=category.id if category else None)
+            if meili_ids is not None:
+                meili_used = True
+                if meili_ids:
+                    products_query = products_query.filter(id__in=meili_ids)
+                else:
+                    products_query = products_query.none()
+            else:
+                products_query = products_query.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
         if price_min:
             try:
@@ -48,14 +60,19 @@ def product_list(request, category_slug=None):
         if availability == "in_stock":
             products_query = products_query.filter(available=True)
 
-        sort_map = {
-            "newest": "-updated",
-            "price_asc": "price",
-            "price_desc": "-price",
-            "name_asc": "name",
-            "name_desc": "-name",
-        }
-        products_query = products_query.order_by(sort_map.get(sort, "-updated"))
+        if meili_used and sort == "newest" and meili_ids:
+            from django.db.models import Case, When
+            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(meili_ids)])
+            products_query = products_query.order_by(preserved_order)
+        else:
+            sort_map = {
+                "newest": "-updated",
+                "price_asc": "price",
+                "price_desc": "-price",
+                "name_asc": "name",
+                "name_desc": "-name",
+            }
+            products_query = products_query.order_by(sort_map.get(sort, "-updated"))
         
         products_list = list(products_query)
         cache.set(query_cache_key, products_list, 600)
@@ -257,7 +274,18 @@ def product_search_ajax(request):
     cache_key = f"ajax_search_{q.lower()}"
     results = cache.get(cache_key)
     if results is None:
-        products = Product.objects.filter(available=True, name__icontains=q)[:5]
+        from .search import search_products_meili
+        meili_ids = search_products_meili(q, limit=5)
+        if meili_ids is not None:
+            if meili_ids:
+                from django.db.models import Case, When
+                preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(meili_ids)])
+                products = Product.objects.filter(id__in=meili_ids, available=True).order_by(preserved_order)
+            else:
+                products = Product.objects.none()
+        else:
+            products = Product.objects.filter(available=True, name__icontains=q)[:5]
+            
         results = []
         for p in products:
             results.append({

@@ -127,7 +127,34 @@ def stripe_webhook(request):
                 return HttpResponse(status=400)
 
             updated = Order.objects.filter(id=order_id, paid=False).update(paid=True, status='paid')
-            if not updated and not Order.objects.filter(id=order_id).exists():
+            if updated:
+                from decimal import Decimal
+                from orders.models import SubOrder
+                SubOrder.objects.filter(order_id=order_id).update(status='paid')
+                
+                sub_orders = SubOrder.objects.filter(order_id=order_id).select_related('vendor', 'vendor__seller_profile')
+                for sub_order in sub_orders:
+                    profile = getattr(sub_order.vendor, 'seller_profile', None)
+                    if profile and profile.stripe_account_id:
+                        vendor_total_after_discount = sub_order.get_total_after_discount()
+                        commission = vendor_total_after_discount * Decimal("0.10")
+                        payout_amount = vendor_total_after_discount - commission
+                        if payout_amount > 0:
+                            payout_cents = int(payout_amount * 100)
+                            try:
+                                stripe.Transfer.create(
+                                    amount=payout_cents,
+                                    currency="uah",
+                                    destination=profile.stripe_account_id,
+                                    transfer_group=f"order_{order_id}",
+                                    description=f"Transfer for SubOrder #{sub_order.id}"
+                                )
+                                logger.info("Stripe Transfer created successfully for SubOrder %s to account %s", sub_order.id, profile.stripe_account_id)
+                            except Exception as e:
+                                logger.exception("Stripe Transfer failed for SubOrder %s: %s", sub_order.id, e)
+                    else:
+                        logger.warning("Vendor %s has no stripe_account_id configured. Payout of %s pending.", sub_order.vendor.username, sub_order.get_total_after_discount())
+            elif not Order.objects.filter(id=order_id).exists():
                 logger.warning("Order not found for Stripe session: %s", order_id)
                 return HttpResponse(status=404)
 

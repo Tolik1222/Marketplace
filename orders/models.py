@@ -73,8 +73,53 @@ class Order(models.Model):
     def get_total_after_discount(self):
         return self.get_total_cost() - self.get_discount_amount()
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if not is_new:
+            if self.status == 'canceled':
+                self.sub_orders.update(status='canceled')
+            elif self.status == 'paid':
+                self.sub_orders.filter(status='pending').update(status='paid')
+
+class SubOrder(models.Model):
+    order = models.ForeignKey(Order, related_name='sub_orders', on_delete=models.CASCADE)
+    vendor = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sub_orders', on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Очікує оплати'),
+            ('paid', 'Оплачено'),
+            ('shipped', 'Надіслано'),
+            ('delivered', 'Доставлено'),
+            ('canceled', 'Скасовано'),
+        ],
+        default='pending',
+    )
+    tracking_number = models.CharField(max_length=100, blank=True, null=True)
+    waybill_ref = models.CharField(max_length=100, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'SubOrder #{self.id} for Order #{self.order.id} (Vendor: {self.vendor.username})'
+
+    def get_total_cost(self):
+        return sum(item.get_cost() for item in self.items.all())
+
+    def get_discount_amount(self):
+        order_total = self.order.get_total_cost()
+        if order_total > 0:
+            share = self.get_total_cost() / order_total
+            return self.order.get_discount_amount() * share
+        return Decimal("0.00")
+
+    def get_total_after_discount(self):
+        return self.get_total_cost() - self.get_discount_amount()
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+    sub_order = models.ForeignKey(SubOrder, related_name='items', on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product, related_name='order_items', on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1)

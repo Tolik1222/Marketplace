@@ -237,3 +237,15 @@ except Exception:
             'LOCATION': 'marketplace-locmem-fallback',
         }
     }
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Meilisearch Configuration
+MEILISEARCH_HOST = os.environ.get('MEILISEARCH_HOST', 'http://127.0.0.1:7700')
+MEILISEARCH_API_KEY = os.environ.get('MEILISEARCH_API_KEY', '')

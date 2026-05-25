@@ -43,11 +43,22 @@ class Product(models.Model):
         from django.core.cache import cache
         cache.clear()
         super().save(*args, **kwargs)
+        try:
+            from .search import index_product
+            index_product(self)
+        except Exception:
+            pass
 
     def delete(self, *args, **kwargs):
+        product_id = self.id
         from django.core.cache import cache
         cache.clear()
         super().delete(*args, **kwargs)
+        try:
+            from .search import remove_product
+            remove_product(product_id)
+        except Exception:
+            pass
 
     @property
     def has_discount(self):

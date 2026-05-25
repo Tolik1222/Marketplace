@@ -14,6 +14,9 @@
             <p class="text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Here you can manage your products, analyze revenue, and view orders.{% else %}Тут ви можете керувати своїми товарами, аналізувати дохід та переглядати замовлення.{% endif %}</p>
         </div>
         <div class="mt-3 mt-md-0 d-flex gap-2 flex-wrap">
+            <a href="{% url 'accounts:seller_profile_edit' %}" class="btn btn-outline-secondary btn-lg rounded-pill shadow-sm">
+                <i class="bi bi-gear me-2"></i>{% if LANGUAGE_CODE == 'en' %}Settings{% else %}Налаштування{% endif %}
+            </a>
             <a href="{% url 'accounts:seller_export_excel' %}" class="btn btn-outline-success btn-lg rounded-pill shadow-sm">
                 <i class="bi bi-file-earmark-excel me-2"></i>{% if LANGUAGE_CODE == 'en' %}Export to Excel{% else %}Експорт в Excel{% endif %}
             </a>
@@ -89,7 +92,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link rounded-3 py-2 fw-semibold" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-panel" type="button" role="tab">
-                <i class="bi bi-receipt me-2"></i>{% if LANGUAGE_CODE == 'en' %}Product Orders{% else %}Замовлення товарів{% endif %} ({{ seller_orders|length }})
+                <i class="bi bi-receipt me-2"></i>{% if LANGUAGE_CODE == 'en' %}My SubOrders{% else %}Мої підзамовлення{% endif %} ({{ seller_sub_orders|length }})
             </button>
         </li>
     </ul>
@@ -186,7 +189,8 @@
             </div>
         </div>
 
-        <!-- Панель Замовлень -->
+        <!-- Панель підзамовлень (SubOrders) -->
+
         <div class="tab-pane fade" id="orders-panel" role="tabpanel">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body p-0">
@@ -194,75 +198,69 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4 py-3">{% if LANGUAGE_CODE == 'en' %}Order{% else %}Замовлення{% endif %}</th>
-                                    <th class="py-3">{% if LANGUAGE_CODE == 'en' %}Buyer & Shipping{% else %}Покупець та Доставка{% endif %}</th>
+                                    <th class="ps-4 py-3">{% if LANGUAGE_CODE == 'en' %}SubOrder{% else %}Підзамовлення{% endif %}</th>
+                                    <th class="py-3">{% if LANGUAGE_CODE == 'en' %}Buyer &amp; Delivery{% else %}Покупець та Доставка{% endif %}</th>
                                     <th class="py-3">{% if LANGUAGE_CODE == 'en' %}My Products{% else %}Мої товари{% endif %}</th>
-                                    <th class="py-3">{% if LANGUAGE_CODE == 'en' %}My Revenue{% else %}Мій дохід{% endif %}</th>
+                                    <th class="py-3">{% if LANGUAGE_CODE == 'en' %}Revenue{% else %}Дохід{% endif %}</th>
+                                    <th class="py-3">ТТН</th>
                                     <th class="py-3">{% if LANGUAGE_CODE == 'en' %}Status{% else %}Статус{% endif %}</th>
-                                    <th class="py-3 pe-4 text-end">{% if LANGUAGE_CODE == 'en' %}Date{% else %}Дата{% endif %}</th>
+                                    <th class="py-3 pe-4 text-end">{% if LANGUAGE_CODE == 'en' %}Actions{% else %}Дії{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for item_data in seller_orders %}
+                                {% for sub_order in seller_sub_orders %}
                                 <tr>
                                     <td class="ps-4">
-                                        <span class="fw-bold">#{{ item_data.order.id }}</span>
+                                        <span class="fw-bold">#{{ sub_order.id }}</span>
+                                        <div class="small text-muted">Замовл. #{{ sub_order.order.id }}</div>
                                     </td>
                                     <td>
-                                        <div class="fw-semibold">{{ item_data.order.first_name }} {{ item_data.order.last_name }}</div>
-                                        <div class="small text-muted">{{ item_data.order.email }}</div>
-                                        <!-- Деталі доставки -->
-                                        <div class="mt-1 small bg-light p-2 rounded border" style="max-width: 320px;">
-                                            <div><strong>{% if LANGUAGE_CODE == 'en' %}Service:{% else %}Служба:{% endif %}</strong> {{ item_data.order.get_delivery_service_display }}</div>
-                                            {% if item_data.order.city %}
-                                                <div><strong>{% if LANGUAGE_CODE == 'en' %}City:{% else %}Місто:{% endif %}</strong> {{ item_data.order.city }}</div>
-                                            {% endif %}
-                                            {% if item_data.order.branch %}
-                                                <div><strong>{% if LANGUAGE_CODE == 'en' %}Branch:{% else %}Відділення:{% endif %}</strong> {{ item_data.order.branch }}</div>
-                                            {% endif %}
-                                            {% if item_data.order.address %}
-                                                <div><strong>{% if LANGUAGE_CODE == 'en' %}Address:{% else %}Адреса:{% endif %}</strong> {{ item_data.order.address }}</div>
-                                            {% endif %}
+                                        <div class="fw-semibold">{{ sub_order.order.first_name }} {{ sub_order.order.last_name }}</div>
+                                        <div class="small text-muted">{{ sub_order.order.email }}</div>
+                                        <div class="mt-1 small text-muted">
+                                            {{ sub_order.order.get_delivery_service_display }}
+                                            {% if sub_order.order.city %} · {{ sub_order.order.city }}{% endif %}
                                         </div>
                                     </td>
                                     <td>
                                         <ul class="list-unstyled mb-0 small">
-                                            {% for oi in item_data.items %}
-                                            <li>
-                                                <i class="bi bi-chevron-right me-1 text-primary"></i>
-                                                {{ oi.product.name }} (<strong class="text-dark">{{ oi.quantity }} {% if LANGUAGE_CODE == 'en' %}pcs.{% else %}шт.{% endif %}</strong> x {{ oi.price }} {% if LANGUAGE_CODE == 'en' %}UAH{% else %}грн{% endif %})
-                                            </li>
+                                            {% for oi in sub_order.items.all %}
+                                            <li><i class="bi bi-chevron-right me-1 text-primary"></i>{{ oi.product.name }} ({{ oi.quantity }} шт.)</li>
                                             {% endfor %}
                                         </ul>
                                     </td>
                                     <td>
-                                        <span class="fw-bold text-success">{{ item_data.seller_total|floatformat:2 }} {% if LANGUAGE_CODE == 'en' %}UAH{% else %}грн{% endif %}</span>
-                                        {% if item_data.order.coupon %}
-                                            <div class="small text-muted" style="font-size: 0.75rem;">{% if LANGUAGE_CODE == 'en' %}(coupon applied: {{ item_data.order.coupon.code }}){% else %}(враховано купон: {{ item_data.order.coupon.code }}){% endif %}</div>
+                                        <span class="fw-bold text-success">{{ sub_order.get_total_after_discount|floatformat:2 }} грн</span>
+                                    </td>
+                                    <td>
+                                        {% if sub_order.tracking_number %}
+                                            <span class="badge bg-success bg-opacity-10 text-success font-monospace" style="font-size:0.75rem;">{{ sub_order.tracking_number }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if item_data.order.status == 'pending' %}
-                                            <span class="badge bg-warning text-dark">{% if LANGUAGE_CODE == 'en' %}Pending Payment{% else %}Очікує оплати{% endif %}</span>
-                                        {% elif item_data.order.status == 'paid' %}
-                                            <span class="badge bg-success">{% if LANGUAGE_CODE == 'en' %}Paid{% else %}Оплачено{% endif %}</span>
-                                        {% elif item_data.order.status == 'shipped' %}
-                                            <span class="badge bg-info text-white">{% if LANGUAGE_CODE == 'en' %}Shipped{% else %}Надіслано{% endif %}</span>
-                                        {% elif item_data.order.status == 'delivered' %}
-                                            <span class="badge bg-primary">{% if LANGUAGE_CODE == 'en' %}Delivered{% else %}Доставлено{% endif %}</span>
-                                        {% elif item_data.order.status == 'canceled' %}
-                                            <span class="badge bg-danger">{% if LANGUAGE_CODE == 'en' %}Canceled{% else %}Скасовано{% endif %}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ item_data.order.get_status_display }}</span>
+                                        {% if sub_order.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Очікує оплати</span>
+                                        {% elif sub_order.status == 'paid' %}
+                                            <span class="badge bg-success">Оплачено</span>
+                                        {% elif sub_order.status == 'shipped' %}
+                                            <span class="badge bg-info text-white">Надіслано</span>
+                                        {% elif sub_order.status == 'delivered' %}
+                                            <span class="badge bg-primary">Доставлено</span>
+                                        {% elif sub_order.status == 'canceled' %}
+                                            <span class="badge bg-danger">Скасовано</span>
                                         {% endif %}
                                     </td>
-                                    <td class="pe-4 text-end text-muted small">
-                                        {{ item_data.order.created|date:"d.m.Y H:i" }}
+                                    <td class="pe-4 text-end">
+                                        <a href="{% url 'accounts:seller_suborder_detail' sub_order.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            <i class="bi bi-eye me-1"></i>Деталі
+                                        </a>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center py-5 text-muted">
+                                    <td colspan="7" class="text-center py-5 text-muted">
                                         <i class="bi bi-receipt fs-1 d-block mb-3"></i>
                                         {% if LANGUAGE_CODE == 'en' %}No orders for your products yet.{% else %}Замовлень ваших товарів поки немає.{% endif %}
                                     </td>
