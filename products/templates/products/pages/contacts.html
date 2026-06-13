@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'en' %}Contact Us - Super Store{% else %}Контакти - Super Store{% endif %}
+{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Contact Cards Column -->
+        <div class="col-lg-5">
+            <h2 class="fw-bold mb-3">{% if LANGUAGE_CODE == 'en' %}Get in Touch{% else %}Контактна інформація{% endif %}</h2>
+            <p class="text-muted mb-4">
+                {% if LANGUAGE_CODE == 'en' %}
+                Have any questions, partnership proposals, or feedback? Feel free to contact our head office directly or write us a message.
+                {% else %}
+                Маєте запитання, пропозиції щодо співпраці чи відгуки? Звертайтеся до нашого головного офісу або надішліть нам електронне повідомлення.
+                {% endif %}
+            </p>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-3" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body p-4 d-flex align-items-start gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px; flex-shrink: 0;">
+                        <i class="bi bi-geo-alt fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">{% if LANGUAGE_CODE == 'en' %}Main Office Address{% else %}Адреса головного офісу{% endif %}</h6>
+                        <address class="small text-muted mb-0" style="font-style: normal; line-height: 1.5;">
+                            {% if LANGUAGE_CODE == 'en' %}
+                            24 Khreshchatyk St, Sumy, 01001, Ukraine
+                            {% else %}
+                            вул. Хрещатик, 24, м. Суми, 01001, Україна
+                            {% endif %}
+                        </address>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-3" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body p-4 d-flex align-items-start gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px; flex-shrink: 0;">
+                        <i class="bi bi-telephone fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">{% if LANGUAGE_CODE == 'en' %}Phone Number{% else %}Номер телефону{% endif %}</h6>
+                        <a href="tel:+380442345678" class="text-decoration-none small fw-semibold text-primary d-block mb-1">+38 (044) 234-56-78</a>
+                        <span class="small text-muted">{% if LANGUAGE_CODE == 'en' %}Mon-Fri: 9:00 - 18:00{% else %}Пн-Пт: 9:00 - 18:00{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 mb-3" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body p-4 d-flex align-items-start gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px; flex-shrink: 0;">
+                        <i class="bi bi-envelope fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">{% if LANGUAGE_CODE == 'en' %}Email Support{% else %}Електронна пошта{% endif %}</h6>
+                        <a href="mailto:support@superstore.com" class="text-decoration-none small fw-semibold text-primary d-block mb-1">support@superstore.com</a>
+                        <span class="small text-muted">{% if LANGUAGE_CODE == 'en' %}24/7 Response time{% else %}Цілодобовий прийом листів{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Form Column -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-between">
+                    <div>
+                        <h3 class="fw-bold mb-3">{% if LANGUAGE_CODE == 'en' %}Send us a Message{% else %}Надіслати нам повідомлення{% endif %}</h3>
+                        <p class="text-muted mb-4 small">
+                            {% if LANGUAGE_CODE == 'en' %}
+                            Fill in the form below, and our manager will get back to you within 2 hours.
+                            {% else %}
+                            Заповніть форму нижче, і наш менеджер зв'яжеться з вами протягом 2 годин.
+                            {% endif %}
+                        </p>
+
+                        <form method="post" action="{% url 'support:ticket_list' %}" class="needs-validation">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Your Name{% else %}Ваше ім'я{% endif %}</label>
+                                    <input type="text" class="form-control rounded-3" required placeholder="John Doe">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Email Address{% else %}Електронна пошта{% endif %}</label>
+                                    <input type="email" class="form-control rounded-3" required placeholder="john@example.com">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Subject{% else %}Тема звернення{% endif %}</label>
+                                    <input type="text" class="form-control rounded-3" required placeholder="{% if LANGUAGE_CODE == 'en' %}Partnership Proposal{% else %}Пропозиція співпраці{% endif %}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold text-muted mb-1">{% if LANGUAGE_CODE == 'en' %}Message{% else %}Текст повідомлення{% endif %}</label>
+                                    <textarea class="form-control rounded-3" rows="5" required placeholder="{% if LANGUAGE_CODE == 'en' %}Write your message details here...{% else %}Напишіть деталі вашого запиту...{% endif %}"></textarea>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 w-100 shadow-sm fw-semibold">
+                                        <i class="bi bi-send-fill me-2"></i>{% if LANGUAGE_CODE == 'en' %}Send Message{% else %}Надіслати повідомлення{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Premium Map Mockup -->
+                    <div class="mt-5 overflow-hidden rounded-3 position-relative" style="height: 180px; background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="position-absolute top-50 start-50 translate-middle text-center text-white opacity-90">
+                            <i class="bi bi-map-fill fs-2 mb-2 text-primary"></i>
+                            <div class="fw-bold small">{% if LANGUAGE_CODE == 'en' %}Super Store Headquarters{% else %}Головний офіс Super Store{% endif %}</div>
+                            <small class="text-white-50">{% if LANGUAGE_CODE == 'en' %}Sumy, Ukraine (Khreshchatyk St){% else %}Україна, м. Суми (вул. Хрещатик){% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

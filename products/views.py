@@ -6,7 +6,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.text import slugify
 from django.core.cache import cache
-from .models import Category, Product, Review, WishlistItem
+from .models import Category, Product, Review, WishlistItem, PromoBanner, TrendingCategory
 from .forms import ProductForm, ReviewForm
 
 # функція списку
@@ -22,15 +22,28 @@ def product_list(request, category_slug=None):
     price_max = request.GET.get("price_max", "")
     availability = request.GET.get("availability", "all")
     sort = request.GET.get("sort", "newest")
+    trending_id = request.GET.get("trending_id", "")
+
+    # Resolve TrendingCategory filter
+    active_trending = None
+    trending_category_ids = []
+    if trending_id:
+        try:
+            active_trending = TrendingCategory.objects.prefetch_related('categories').get(id=int(trending_id), is_active=True)
+            trending_category_ids = list(active_trending.categories.values_list('id', flat=True))
+        except (TrendingCategory.DoesNotExist, ValueError):
+            trending_id = ""
 
     # Construct unique cache key for the query results before pagination
-    query_cache_key = f"products_query_{category_slug or 'all'}_{price_min}_{price_max}_{availability}_{sort}_{query}"
+    query_cache_key = f"products_query_{category_slug or 'all'}_{price_min}_{price_max}_{availability}_{sort}_{query}_{trending_id}"
     
     products_list = cache.get(query_cache_key)
     if products_list is None:
         products_query = Product.objects.filter(available=True)
         if category:
             products_query = products_query.filter(category=category)
+        elif trending_category_ids:
+            products_query = products_query.filter(category_id__in=trending_category_ids)
         
         meili_used = False
         meili_ids = None
@@ -105,6 +118,24 @@ def product_list(request, category_slug=None):
         600
     )
 
+    top_picks = cache.get_or_set(
+        "products_top_picks",
+        lambda: list(Product.objects.filter(available=True).order_by("-updated")[:10]),
+        600
+    )
+
+    promo_banners = cache.get_or_set(
+        "active_promo_banners",
+        lambda: list(PromoBanner.objects.filter(is_active=True).order_by('order', '-id')),
+        600
+    )
+
+    trending_categories = cache.get_or_set(
+        "trending_categories_active",
+        lambda: list(TrendingCategory.objects.filter(is_active=True).prefetch_related('categories').order_by('order', 'id')),
+        600
+    )
+
     return render(request, 'products/product/list.html', {
         'category': category,
         'categories': categories,
@@ -116,6 +147,10 @@ def product_list(request, category_slug=None):
         'availability': availability,
         'sort': sort,
         'discounted_products': discounted_products,
+        'top_picks': top_picks,
+        'promo_banners': promo_banners,
+        'trending_categories': trending_categories,
+        'active_trending': active_trending,
         'query_string': query_string,
     })
 
@@ -224,6 +259,19 @@ def product_detail(request, id, slug):
 
 def shipping_payment(request):
     return render(request, 'products/pages/shipping_payment.html')
+
+
+def about_us(request):
+    return render(request, 'products/pages/about_us.html')
+
+
+def warranty(request):
+    return render(request, 'products/pages/warranty.html')
+
+
+def contacts(request):
+    return render(request, 'products/pages/contacts.html')
+
 
 
 @login_required

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'en' %}About Us - Super Store{% else %}Про нас - Super Store{% endif %}
+{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="row align-items-center mb-5 g-5">
+        <div class="col-lg-6">
+            <h1 class="display-5 fw-extrabold mb-3 text-gradient" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                {% if LANGUAGE_CODE == 'en' %}Super Store — Era of E-Commerce{% else %}Super Store — Нова ера e-commerce{% endif %}
+            </h1>
+            <p class="lead text-muted mb-4" style="font-size: 1.15rem; line-height: 1.75;">
+                {% if LANGUAGE_CODE == 'en' %}
+                We are a modern high-tech marketplace focused on providing premium products, exceptional client services, and the fastest shipping.
+                {% else %}
+                Ми є сучасним високотехнологічним маркетплейсом, що зосереджений на наданні товарів преміум-класу, винятковому обслуговуванні клієнтів та швидкій доставці.
+                {% endif %}
+            </p>
+            <div class="d-flex gap-3">
+                <a href="{% url 'products:product_list' %}" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm">
+                    {% if LANGUAGE_CODE == 'en' %}Go Shopping{% else %}До покупок{% endif %}
+                </a>
+                <a href="{% url 'support:ticket_list' %}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                    {% if LANGUAGE_CODE == 'en' %}Get Support{% else %}Зв'язатися з нами{% endif %}
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="position-relative">
+                <div class="position-absolute top-50 start-50 translate-middle bg-primary opacity-10 rounded-circle" style="width: 450px; height: 450px; blur: 80px; filter: blur(50px);"></div>
+                <div class="card border-0 shadow-lg overflow-hidden rounded-4 z-1 position-relative" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(255,255,255,0.05) !important;">
+                    <div class="card-body p-5 text-white">
+                        <span class="badge bg-primary px-3 py-2 text-uppercase tracking-wider fw-bold mb-3">{% if LANGUAGE_CODE == 'en' %}OUR MISSION{% else %}НАША МІСІЯ{% endif %}</span>
+                        <h3 class="fw-bold mb-4">{% if LANGUAGE_CODE == 'en' %}Bringing quality and joy to every home{% else %}Приносити якість та радість у кожну домівку{% endif %}</h3>
+                        <p class="text-white-50 mb-0" style="line-height: 1.7;">
+                            {% if LANGUAGE_CODE == 'en' %}
+                            We strive to bridge the gap between quality manufacturers and discerning buyers. Our ecosystem is built on absolute transparency, top security, and AI-driven recommendations.
+                            {% else %}
+                            Ми прагнемо скоротити шлях між якісними виробниками та вибагливими покупцями. Наша екосистема побудована на абсолютній прозорості, високій безпеці та сучасних технологіях рекомендацій.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row g-4 mb-5 text-center">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-opacity-25" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="display-4 fw-extrabold text-primary mb-2">1-2</div>
+                    <h6 class="fw-bold text-uppercase text-muted-custom mb-0">{% if LANGUAGE_CODE == 'en' %}Active Customers{% else %}Активних клієнтів{% endif %}</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-opacity-25" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="display-4 fw-extrabold text-primary mb-2">99.9%</div>
+                    <h6 class="fw-bold text-uppercase text-muted-custom mb-0">{% if LANGUAGE_CODE == 'en' %}Satisfied Reviews{% else %}Задоволених відгуків{% endif %}</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-opacity-25" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="display-4 fw-extrabold text-primary mb-2">10+</div>
+                    <h6 class="fw-bold text-uppercase text-muted-custom mb-0">{% if LANGUAGE_CODE == 'en' %}Products Available{% else %}Товарів у каталозі{% endif %}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Values -->
+    <div class="row g-4">
+        <h3 class="text-center fw-bold mb-4">{% if LANGUAGE_CODE == 'en' %}Our Core Values{% else %}Наші ключові цінності{% endif %}</h3>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 text-center" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="mb-3"><i class="bi bi-shield-check text-primary fs-1"></i></div>
+                    <h5 class="fw-bold">{% if LANGUAGE_CODE == 'en' %}Trust & Safety{% else %}Довіра та безпека{% endif %}</h5>
+                    <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Every transaction is fully protected. Secure payments and verified sellers.{% else %}Кожна транзакція повністю захищена. Безпечна оплата та перевірені продавці.{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 text-center" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="mb-3"><i class="bi bi-rocket-takeoff text-primary fs-1"></i></div>
+                    <h5 class="fw-bold">{% if LANGUAGE_CODE == 'en' %}Fast Logistics{% else %}Швидка логістика{% endif %}</h5>
+                    <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Direct partnerships with major post operators to deliver items in 1-3 days.{% else %}Пряме партнерство з поштовими операторами для доставки за 1-3 дні.{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 text-center" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="mb-3"><i class="bi bi-gem text-primary fs-1"></i></div>
+                    <h5 class="fw-bold">{% if LANGUAGE_CODE == 'en' %}Premium Quality{% else %}Висока якість{% endif %}</h5>
+                    <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}We check reviews, ratings, and sellers before letting them join our store.{% else %}Ми перевіряємо відгуки, рейтинги та продавців, перш ніж допускати їх.{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100 text-center" style="border: 1px solid var(--border-color) !important;">
+                <div class="card-body">
+                    <div class="mb-3"><i class="bi bi-emoji-laughing text-primary fs-1"></i></div>
+                    <h5 class="fw-bold">{% if LANGUAGE_CODE == 'en' %}Happy Customers{% else %}Щасливі клієнти{% endif %}</h5>
+                    <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}24/7 client care, instant responses, and simple returns.{% else %}Цілодобова турбота про клієнтів, миттєві відповіді та легке повернення.{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

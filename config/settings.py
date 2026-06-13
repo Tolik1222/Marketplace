@@ -37,7 +37,7 @@ def env_bool(name, default=False):
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env_bool("DJANGO_DEBUG", False)
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -245,6 +245,13 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+import sys
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'cache+memory://'
 
 # Meilisearch Configuration
 MEILISEARCH_HOST = os.environ.get('MEILISEARCH_HOST', 'http://127.0.0.1:7700')

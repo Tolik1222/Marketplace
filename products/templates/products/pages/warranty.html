@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if LANGUAGE_CODE == 'en' %}Warranty & Returns - Super Store{% else %}Гарантія та повернення - Super Store{% endif %}
+{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Main content column -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="mb-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-primary fs-1"></i>
+                        {% if LANGUAGE_CODE == 'en' %}Warranty & Service Policy{% else %}Умови гарантії та сервісу{% endif %}
+                    </h2>
+                    
+                    <p class="text-muted mb-4" style="line-height: 1.7;">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        We values our reputation and strictly adheres to customer protection laws. All electronics, gadgets, and accessories sold at Super Store come with official manufacturer's or seller's warranty.
+                        {% else %}
+                        Ми цінуємо свою репутацію і суворо дотримуємося законів про захист прав споживачів. На всі електронні прилади, гаджети та аксесуари в Super Store надається офіційна гарантія виробника або продавця.
+                        {% endif %}
+                    </p>
+
+                    <!-- Alert message -->
+                    <div class="alert alert-primary border-0 rounded-3 d-flex align-items-start gap-3 p-3 mb-4">
+                        <i class="bi bi-info-circle-fill fs-4 text-primary mt-1"></i>
+                        <div>
+                            <strong class="d-block mb-1">{% if LANGUAGE_CODE == 'en' %}Did you know?{% else %}Чи знаєте ви?{% endif %}</strong>
+                            <span class="small opacity-90">
+                                {% if LANGUAGE_CODE == 'en' %}
+                                You have the right to exchange or return a product within <strong>14 days</strong> of purchase if it hasn't been used and retains its original condition.
+                                {% else %}
+                                Ви маєте право обміняти або повернути товар протягом <strong>14 днів</strong> з дня покупки, якщо він не був у використанні та зберіг свій товарний вигляд.
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Steps Timeline -->
+                    <h4 class="fw-bold mb-3 mt-4">{% if LANGUAGE_CODE == 'en' %}Warranty Claim Process{% else %}Як скористатися гарантією{% endif %}</h4>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 h-100">
+                                <div class="badge bg-primary rounded-circle mb-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">1</div>
+                                <h6 class="fw-bold mb-2">{% if LANGUAGE_CODE == 'en' %}Create Ticket{% else %}Створіть запит{% endif %}</h6>
+                                <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Contact support or seller through the Support Chat and describe the issue.{% else %}Зв'яжіться з нами через чат підтримки та детально опишіть проблему.{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 h-100">
+                                <div class="badge bg-primary rounded-circle mb-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">2</div>
+                                <h6 class="fw-bold mb-2">{% if LANGUAGE_CODE == 'en' %}Ship Product{% else %}Відправте товар{% endif %}</h6>
+                                <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Send the product to the authorized service center via Nova Poshta.{% else %}Надішліть товар до авторизованого сервісного центру через Нову Пошту.{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 h-100">
+                                <div class="badge bg-primary rounded-circle mb-2 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">3</div>
+                                <h6 class="fw-bold mb-2">{% if LANGUAGE_CODE == 'en' %}Get Repaired / Replaced{% else %}Ремонт або обмін{% endif %}</h6>
+                                <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'en' %}Get your device fixed or replaced with a brand new one within 7-14 days.{% else %}Отримайте відремонтований або новий пристрій протягом 7-14 днів.{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Terms -->
+                    <h4 class="fw-bold mb-3 mt-4">{% if LANGUAGE_CODE == 'en' %}Frequently Asked Questions{% else %}Часті запитання про сервіс{% endif %}</h4>
+                    <div class="accordion border-0" id="warrantyAccordion">
+                        <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    {% if LANGUAGE_CODE == 'en' %}What is covered under the warranty?{% else %}На які випадки поширюється гарантія?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#warrantyAccordion">
+                                <div class="accordion-body text-muted small">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    The warranty covers any factory defects, hardware failure, or malfunction caused by normal usage according to manufacturer guidelines. It does not cover mechanical damage, exposure to liquids, or unofficial firmware modifications.
+                                    {% else %}
+                                    Гарантія покриває будь-які заводські дефекти, апаратні збої або несправності, що виникли при нормальному використанні згідно з інструкцією виробника. Вона не покриває механічні пошкодження, залиття рідиною чи самостійні модифікації прошивки.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    {% if LANGUAGE_CODE == 'en' %}What documents are needed for warranty claim?{% else %}Які документи потрібні для гарантійного обслуговування?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#warrantyAccordion">
+                                <div class="accordion-body text-muted small">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    You will need to provide the warranty card (if included), the packaging box, the order receipt, and a descriptions of the defect.
+                                    {% else %}
+                                    Вам знадобиться гарантійний талон (якщо він був у комплекті), оригінальна упаковка товару, товарний чек/номер замовлення, а також детальний опис несправності.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                    {% if LANGUAGE_CODE == 'en' %}Who pays for warranty shipping?{% else %}Хто оплачує доставку несправного товару?{% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#warrantyAccordion">
+                                <div class="accordion-body text-muted small">
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                    If the defect occurs within the first 14 days, the shipping costs are covered by the seller. After 14 days, shipping to the service center is covered by the customer, and return shipping is covered by us.
+                                    {% else %}
+                                    Якщо несправність виявлена протягом перших 14 днів, витрати на доставку покриває продавець. Після 14 днів доставка в сервісний центр оплачується покупцем, а повернення відремонтованого товару — нами.
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar helper column -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">{% if LANGUAGE_CODE == 'en' %}Warranty Period{% else %}Терміни гарантії{% endif %}</h5>
+                    <div class="d-flex align-items-center gap-3 mb-3 border-bottom pb-2">
+                        <i class="bi bi-laptop fs-3 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">{% if LANGUAGE_CODE == 'en' %}Laptops & Computers{% else %}Ноутбуки та Комп'ютери{% endif %}</div>
+                            <small class="text-muted">12 - 36 {% if LANGUAGE_CODE == 'en' %}Months{% else %}Місяців{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 mb-3 border-bottom pb-2">
+                        <i class="bi bi-phone fs-3 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">{% if LANGUAGE_CODE == 'en' %}Smartphones & Tablets{% else %}Смартфони та Планшети{% endif %}</div>
+                            <small class="text-muted">12 - 24 {% if LANGUAGE_CODE == 'en' %}Months{% else %}Місяців{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3 mb-1">
+                        <i class="bi bi-mouse fs-3 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">{% if LANGUAGE_CODE == 'en' %}Accessories & Gear{% else %}Аксесуари та периферія{% endif %}</div>
+                            <small class="text-muted">6 - 12 {% if LANGUAGE_CODE == 'en' %}Months{% else %}Місяців{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 bg-primary text-white">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-patch-question me-2"></i>{% if LANGUAGE_CODE == 'en' %}Need Help?{% else %}Маєте запитання?{% endif %}</h5>
+                    <p class="small opacity-85 mb-4">
+                        {% if LANGUAGE_CODE == 'en' %}
+                        Our customer service team is always online to help you verify your warranty status or guide you through product returns.
+                        {% else %}
+                        Наша команда підтримки завжди на зв'язку, щоб допомогти вам перевірити статус гарантії або провести процес повернення товару.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'support:ticket_list' %}" class="btn btn-light w-100 rounded-pill fw-bold text-primary">
+                        {% if LANGUAGE_CODE == 'en' %}Contact Support{% else %}Звернутися в підтримку{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
